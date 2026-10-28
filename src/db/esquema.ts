@@ -53,6 +53,8 @@ export const ficha = pgTable('ficha', {
   build: text('build'),
   bateriaPct: integer('bateria_pct'),
   bateriaCiclos: integer('bateria_ciclos'),
+  bateriaSalidaPct: integer('bateria_salida_pct'),
+  bateriaSalidaCiclos: integer('bateria_salida_ciclos'),
   codigoProtegido: boolean('codigo_protegido'),
   estadoActivacion: text('estado_activacion'),
   origenDatos: origenDatos('origen_datos').notNull().default('manual'),
