@@ -226,3 +226,60 @@ body {
   color: var(--color-timbre);
   font-weight: 600;
 }
+
+.seccion {
+  margin-top: 2rem;
+}
+
+.subtitulo {
+  font-family: var(--fuente-estrecha);
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  margin: 0 0 0.75rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--color-linea);
+}
+
+.franja-usb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  background: var(--color-campo);
+  border-left: 3px solid var(--color-linea);
+}
+
+.franja-usb-texto {
+  font-size: 0.9375rem;
+  margin: 0;
+  flex: 1 1 16rem;
+}
+
+.boton-secundario {
+  font-family: var(--fuente-estrecha);
+  font-size: 0.9375rem;
+  letter-spacing: 0.015em;
+  color: var(--color-linea);
+  background: transparent;
+  border: 1px solid var(--color-linea);
+  border-radius: 2px;
+  padding: 0.45rem 1rem;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.boton-secundario:hover {
+  background: var(--color-linea);
+  color: var(--color-fondo);
+}
+
+.campo-area {
+  min-height: 4.5rem;
+  resize: vertical;
+}

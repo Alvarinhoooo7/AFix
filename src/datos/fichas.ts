@@ -1,7 +1,7 @@
 import { and, asc, eq, isNull } from 'drizzle-orm'
 import { catalogoActivo } from '@/datos/catalogo'
 import type { Ficha } from '@/datos/equipos'
-import { obtenerDb } from '@/db/cliente'
+import { obtenerDb, type DrizzleDb } from '@/db/cliente'
 import { equipo, ficha, notaPosterior } from '@/db/esquema'
 import { normalizarImei } from '@/dominio/equipo'
 import { transicionPermitida, type DatosIngreso } from '@/dominio/ficha'
@@ -12,6 +12,10 @@ export type FichaConNotas = Ficha & { notasPosteriores: NotaPosterior[] }
 /** Datos de ingreso; sin catalogoVersion se usa la versión del catálogo en vigor. */
 export type EntradaIngreso = Omit<DatosIngreso, 'catalogoVersion'> & { catalogoVersion?: number }
 
+export type ResultadoIngreso =
+  | { ok: true; ficha: Ficha }
+  | { ok: false; mensaje: string; datos: DatosIngreso }
+
 /** Campos que solo cambian por cerrarFicha o por la base: actualizarFicha no los toca. */
 const CAMPOS_RESERVADOS = ['numero', 'equipoId', 'estado', 'entregadoEn', 'congeladaEn'] as const
 
@@ -19,12 +23,12 @@ const errorInexistente = (numero: number) => new Error(`La ficha ${numero} no ex
 const errorCongelada = (numero: number) =>
   new Error(`La ficha ${numero} está congelada: ya fue entregada y no se puede editar. Agrega una nota posterior.`)
 
-export async function crearFicha(datos: EntradaIngreso): Promise<Ficha> {
-  const catalogoVersion = datos.catalogoVersion ?? (await catalogoActivo()).version
+export async function crearFicha(datos: EntradaIngreso, db: DrizzleDb = obtenerDb()): Promise<Ficha> {
+  const catalogoVersion = datos.catalogoVersion ?? (await catalogoActivo(db)).version
   // Quien escribe normaliza: un IMEI mal formado se guarda como null, nunca como identidad.
   const imei = datos.imei === null ? null : normalizarImei(datos.imei)
 
-  return obtenerDb().transaction(async (tx) => {
+  return db.transaction(async (tx) => {
     let equipoId: string | undefined
     if (imei) {
       const [existente] = await tx.select({ id: equipo.id }).from(equipo).where(eq(equipo.imei, imei))
@@ -61,6 +65,27 @@ export async function crearFicha(datos: EntradaIngreso): Promise<Ficha> {
       .returning()
     return creada
   })
+}
+
+/**
+ * Intenta persistir un ingreso sin propagar excepciones hacia la interfaz.
+ * Si la base de datos no responde, devuelve el mensaje en español junto con los datos
+ * originales para que el formulario conserve todo lo que el técnico ya escribió.
+ */
+export async function intentarGuardarIngreso(
+  datos: DatosIngreso,
+  deps: { db: DrizzleDb } = { db: obtenerDb() },
+): Promise<ResultadoIngreso> {
+  try {
+    const creada = await crearFicha(datos, deps.db)
+    return { ok: true, ficha: creada }
+  } catch {
+    return {
+      ok: false,
+      mensaje: 'No se pudo guardar el ingreso. Revisa la conexión con la base de datos y vuelve a intentar.',
+      datos,
+    }
+  }
 }
 
 export async function obtenerFicha(numero: number): Promise<FichaConNotas | null> {
