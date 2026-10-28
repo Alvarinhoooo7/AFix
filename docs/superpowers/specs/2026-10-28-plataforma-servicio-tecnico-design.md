@@ -42,6 +42,29 @@ lo que hizo**.
   ficha anterior.
 - Un voucher imprimible con todo lo anterior, para entregar con el equipo.
 
+## 2.1 Ampliación de alcance — Android (28 de octubre de 2026)
+
+El diseño original era solo iPhone. Durante la construcción se agregó un **lector
+unificado** (`scripts/lector_usb.py`) que además lee equipos Android por ADB, y el dueño
+confirmó que funciona y que lo quiere: *"en android anda"*.
+
+Queda dentro del alcance. Condiciones, para que no se desarme el resto del diseño:
+
+- **El anti objetivo principal no cambia:** la lectura por USB nunca bloquea el ingreso,
+  ni para iPhone ni para Android. Si no hay ADB, o el equipo no está autorizado, se carga
+  a mano igual.
+- Lo específico de iPhone sigue siendo específico de iPhone: la tabla `ProductType` →
+  modelo comercial, los ciclos de batería por el canal de diagnóstico de Apple y el
+  historial de piezas de iOS 15.2+ no tienen equivalente en el camino Android.
+- El checklist de §9.4 se escribió mirando iPhones. Varias líneas (True Tone, Face ID)
+  no aplican a Android y quedarían en "No probado". **Si Android pasa a ser trabajo
+  habitual, el catálogo necesita una versión con sus propias líneas** — el catálogo ya es
+  versionado justamente para eso.
+
+**Deuda conocida:** ese lector entró en el commit `63dbc65` sin pasar por la compuerta de
+revisión del proceso y **sin ninguna prueba**. Es el único módulo del proyecto sin red.
+La revisión final de rama debe cubrirlo.
+
 ## 3. No objetivos
 
 Fuera de alcance, decidido explícitamente por el dueño:

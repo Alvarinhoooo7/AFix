@@ -75,8 +75,8 @@ export default async function Inicio({
     <main className="hoja">
       <header className="encabezado-ficha">
         <div>
-          <h1 className="titulo">Pauta de taller — AFIX</h1>
-          <p className="nota">Equipos en mesa de trabajo, historial y búsqueda.</p>
+          <h1 className="titulo">AFIX</h1>
+          <p className="nota">Qué hay en la mesa, qué se entregó y dónde buscarlo.</p>
         </div>
         <div className="acciones">
           <Link className="boton" href="/ingreso">
@@ -99,25 +99,24 @@ export default async function Inicio({
       ) : null}
 
       <section className="seccion" style={{ marginTop: 0 }}>
-        <form method="get" action="/" className="formulario">
-          <div className="ancho-total">
+        <form method="get" action="/" className="barra-busqueda">
+          <div className="barra-busqueda-campo">
             <Campo
-              etiqueta="Buscar por número de ficha, IMEI, número de serie, modelo o quién lo trajo"
+              etiqueta="Buscar"
               nombre="q"
               valor={consulta}
+              placeholder="Número de ficha, IMEI, número de serie, modelo o quién lo trajo"
               editable
             />
           </div>
-          <div className="acciones ancho-total">
-            <button className="boton" type="submit">
-              Buscar
-            </button>
-            {consulta ? (
-              <Link className="boton-secundario" href="/">
-                Limpiar búsqueda
-              </Link>
-            ) : null}
-          </div>
+          <button className="boton-secundario" type="submit">
+            Buscar
+          </button>
+          {consulta ? (
+            <Link className="boton-secundario" href="/">
+              Limpiar búsqueda
+            </Link>
+          ) : null}
         </form>
       </section>
 

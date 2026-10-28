@@ -225,7 +225,24 @@ body {
   border-radius: 2px;
   padding: 0.55rem 1.4rem;
   cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
   transition: background-color 120ms ease;
+}
+
+/* La barra de búsqueda: el campo y su botón en la misma línea, apoyados sobre
+   la misma regla. Separados se leen como dos cosas sin relación. */
+.barra-busqueda {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.barra-busqueda-campo {
+  flex: 1 1 20rem;
+  min-width: 0;
 }
 
 .boton:hover {
@@ -429,9 +446,12 @@ body {
   font-weight: 600;
 }
 
+/* "No probado" queda marcado pero apagado: es la ausencia de un resultado, no
+   un resultado. Si es lo más oscuro de la fila, el ojo se va a la no-información.
+   Orden de peso: Falla (rojo) > Bien (tinta) > No probado. */
 .casilla-neutra {
-  background: var(--color-linea);
-  border-color: var(--color-linea);
+  background: var(--color-secundario);
+  border-color: var(--color-secundario);
   color: var(--color-fondo);
   font-weight: 600;
 }
@@ -507,9 +527,10 @@ body {
   accent-color: var(--color-tinta);
 }
 
+/* Renglones de talonario, no tarjetas: la pauta lista los trabajos como líneas
+   sobre el papel. Una caja por ficha es vocabulario de otra cosa. */
 .lista-fichas {
-  border: 1px solid var(--color-linea);
-  background: var(--color-fondo);
+  background: transparent;
 }
 
 .fila-inicio {
@@ -518,8 +539,8 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem 1rem;
-  padding: 0.7rem 0.9rem;
-  border-bottom: 1px solid var(--color-linea);
+  padding: 0.7rem 0.4rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-linea) 22%, transparent);
   text-decoration: none;
   color: var(--color-linea);
 }
@@ -532,10 +553,12 @@ body {
   background: var(--color-campo);
 }
 
+/* El número va en tinta, no en rojo. El rojo es la única señal de la hoja: si
+   cada ficha de la lista lo usa, deja de querer decir "mira acá". */
 .fila-inicio-ficha {
   font-family: var(--fuente-estrecha);
   font-weight: 700;
-  color: var(--color-timbre);
+  color: var(--color-tinta);
   min-width: 4.5rem;
 }
 
