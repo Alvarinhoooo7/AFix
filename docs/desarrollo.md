@@ -1,5 +1,11 @@
 # Desarrollo local
 
+## Requisitos para correr las pruebas
+
+1. Tener Docker activo y el CLI de `supabase` en el `PATH`.
+2. Levantar el stack local con `supabase start`.
+3. Definir `DATABASE_URL` y `TEST_DATABASE_URL` en `.env.local` (puedes copiar `.env.example`).
+
 ## Base de datos local: solo datos de prueba
 
 `supabase start` levanta Postgres en Docker y publica sus puertos en `0.0.0.0`, es

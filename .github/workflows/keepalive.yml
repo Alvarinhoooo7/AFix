@@ -1,0 +1,22 @@
+name: Latido de la base de datos (Keepalive)
+
+on:
+  schedule:
+    # Corre cada 3 días a las 09:00 UTC para evitar que el plan gratuito de Supabase pause el proyecto
+    # aunque el PC del taller esté apagado o en reemplazo (diseño §11.1).
+    - cron: '0 9 */3 * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Consultar la base para mantener activo el proyecto
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "Falta configurar el secreto DATABASE_URL en el repositorio de GitHub."
+            exit 1
+          fi
+          psql "$DATABASE_URL" -c "select id, nombre from public.ajustes_taller where id = 1;"
