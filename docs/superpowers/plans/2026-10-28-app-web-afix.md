@@ -25,6 +25,10 @@
 - **El servidor escucha solo en `localhost`.** No se expone a la red local. No hay login.
 - **Piso de calidad:** responsive hasta ancho de teléfono, foco visible con teclado, `prefers-reduced-motion` respetado.
 - **Commits frecuentes**, uno por tarea como mínimo.
+- **Las claves del catálogo de checklist son canónicas.** Quedaron fijadas por la Tarea 2 y las fichas las graban, así que renombrar una exige migrar datos. Toda tarea que toque checklists usa exactamente estas:
+  - `funcionamiento`, estados `["Bien","Falla","No probado"]`: `pantalla_tactil`, `true_tone`, `face_id`, `camara_trasera`, `camara_frontal`, `parlante`, `auricular`, `microfonos`, `carga`, `botones`, `vibrador`, `wifi_senal`, `sensor_proximidad`
+  - `condicion`: `apertura_previa` `["Sin señales","Con señales"]`, `indicador_humedad` `["Sin indicio","Activado"]`, `vidrio_trasero` `["Sano","Rayado","Trizado"]`, `chasis` `["Sano","Golpes","Doblado"]`
+  - Las claves son ASCII sin acentos a propósito; las etiquetas visibles sí los llevan (`Pantalla y táctil`, `Cámara trasera`, `Micrófonos`, `Wi-Fi y señal`, `Sensor de proximidad`).
 
 ## Review Focus
 
