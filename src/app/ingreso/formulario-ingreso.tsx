@@ -161,7 +161,7 @@ export function FormularioIngreso({
         <p className="franja-usb-texto">{avisoUsb}</p>
         <div className="acciones">
           <button
-            className="boton"
+            className="boton-secundario"
             type="button"
             onClick={escanearUsb}
             disabled={escaneandoUsb}

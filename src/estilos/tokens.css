@@ -70,9 +70,10 @@ body {
 
 .titulo {
   font-family: var(--fuente-estrecha);
-  font-size: 1.5rem;
-  font-weight: 600;
-  letter-spacing: 0.01em;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.005em;
+  line-height: 1.1;
   margin: 0;
 }
 
@@ -98,34 +99,51 @@ body {
 .campo-etiqueta {
   display: block;
   font-family: var(--fuente-estrecha);
-  font-size: 0.8125rem;
-  letter-spacing: 0.015em;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
   color: var(--color-secundario);
-  margin-bottom: 0.2rem;
+  margin-bottom: 0.1rem;
 }
 
+/* El valor se apoya SOBRE la línea, como lo escrito a mano en el papel preimpreso.
+   Sin relleno: un rectángulo relleno es una caja aunque no tenga borde, y ahí se
+   pierde la dirección. El papel se ve entre campo y campo. */
 .campo-valor {
   display: block;
   width: 100%;
-  min-height: 2.5rem;
-  padding: 0.3rem 0.5rem;
-  background: var(--color-campo);
+  min-height: 2rem;
+  padding: 0.15rem 0 0.3rem;
+  background: transparent;
   border: 0;
-  border-bottom: 1px solid var(--color-linea);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-linea) 42%, transparent);
   border-radius: 0;
   font-family: var(--fuente-base);
-  font-size: 1rem;
+  font-size: 1.0625rem;
   font-weight: 600;
   color: var(--color-tinta);
 }
 
 .campo-entrada {
   appearance: none;
+  transition: border-color 120ms ease;
+}
+
+/* Al escribir, la línea se entinta: el mismo gesto de apretar más el lápiz. */
+.campo-entrada:hover {
+  border-bottom-color: color-mix(in srgb, var(--color-linea) 70%, transparent);
 }
 
 .campo-entrada:focus-visible {
   outline: 2px solid var(--color-tinta);
-  outline-offset: 1px;
+  outline-offset: 3px;
+  border-bottom-color: var(--color-tinta);
+}
+
+/* El texto de ayuda no puede parecer un valor escrito. */
+.campo-entrada::placeholder {
+  color: var(--color-secundario);
+  font-weight: 400;
+  opacity: 0.75;
 }
 
 /* El timbre de goma: el número de ficha. El único elemento que grita en la hoja. */
@@ -231,14 +249,16 @@ body {
   margin-top: 2rem;
 }
 
+/* Divisor de zona de la pauta: regla más gruesa que la de los campos, para que
+   las secciones se lean como bloques preimpresos y no como una lista continua. */
 .subtitulo {
   font-family: var(--fuente-estrecha);
-  font-size: 1.125rem;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  margin: 0 0 0.75rem;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin: 0 0 1rem;
   padding-bottom: 0.3rem;
-  border-bottom: 1px solid var(--color-linea);
+  border-bottom: 1.5px solid var(--color-linea);
 }
 
 .franja-usb {
@@ -279,9 +299,17 @@ body {
   color: var(--color-fondo);
 }
 
+/* La observación general sí es un recuadro: en la orden en papel es el único
+   bloque con caja, porque es el espacio libre para escribir. */
 .campo-area {
-  min-height: 4.5rem;
+  min-height: 5rem;
+  padding: 0.5rem 0.65rem;
+  background: color-mix(in srgb, var(--color-campo) 60%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-linea) 28%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--color-linea) 42%, transparent);
   resize: vertical;
+  font-weight: 400;
+  line-height: 1.5;
 }
 
 /* Checklist de pauta: filas de casillas con colores de tinta o timbre */
@@ -324,14 +352,33 @@ body {
   font-size: 0.9375rem;
 }
 
+/* La palabra en vez de un ícono: el glifo de lápiz se dibuja distinto en cada
+   equipo y se lee como un garabato. Ancho fijo para que la columna de estados
+   quede alineada fila a fila. */
 .boton-nota {
-  font-family: var(--fuente-base);
-  font-size: 0.95rem;
+  font-family: var(--fuente-estrecha);
+  font-size: 0.8125rem;
+  letter-spacing: 0.02em;
   color: var(--color-secundario);
   background: transparent;
-  border: 1px solid transparent;
-  padding: 0.2rem 0.45rem;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-linea) 30%, transparent);
+  padding: 0.1rem 0.2rem;
+  width: 3rem;
+  flex: none;
+  text-align: center;
   cursor: pointer;
+  transition: color 100ms ease, border-color 100ms ease;
+}
+
+.boton-nota:hover:not(:disabled) {
+  color: var(--color-linea);
+  border-bottom-color: var(--color-linea);
+}
+
+.boton-nota:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 .boton-nota-activa {
@@ -340,21 +387,32 @@ body {
   background: var(--color-campo);
 }
 
+/* Alineadas al borde derecho: con 17 filas, un margen derecho parejo es lo que
+   deja recorrer la columna de un vistazo. */
 .checklist-estados {
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 0.35rem;
 }
 
+/* En reposo la casilla es tenue: con 17 líneas en pantalla, lo que importa es ver
+   de un vistazo qué ya contestaste. Las respondidas se entintan y saltan solas. */
 .casilla {
   font-family: var(--fuente-estrecha);
   font-size: 0.8125rem;
   padding: 0.25rem 0.65rem;
-  border: 1px solid var(--color-linea);
+  border: 1px solid color-mix(in srgb, var(--color-linea) 32%, transparent);
   background: transparent;
-  color: var(--color-linea);
+  color: var(--color-secundario);
   cursor: pointer;
   border-radius: 1px;
+  transition: border-color 100ms ease, color 100ms ease;
+}
+
+.casilla:hover {
+  border-color: var(--color-linea);
+  color: var(--color-linea);
 }
 
 .casilla-activa {

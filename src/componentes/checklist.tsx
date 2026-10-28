@@ -86,7 +86,7 @@ export function Checklist({
                     aria-expanded={mostrarNota}
                     disabled={deshabilitado && !tieneNotaEscrita}
                   >
-                    ✎
+                    nota
                   </button>
                   <div className="checklist-estados" role="group" aria-label={linea.etiqueta}>
                     {linea.estados.map((estado) => {

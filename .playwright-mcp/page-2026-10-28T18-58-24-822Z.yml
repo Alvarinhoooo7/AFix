@@ -1,0 +1,189 @@
+- generic [active] [ref=f6e1]:
+  - main [ref=f6e2]:
+    - generic [ref=f6e3]:
+      - heading "Ingreso de equipo" [level=1] [ref=f6e4]
+      - paragraph [ref=f6e5]: "Todos los campos son opcionales: si el equipo llega apagado o sin IMEI visible, la ficha se guarda igual."
+    - region "Modo de carga de datos" [ref=f6e7]:
+      - paragraph [ref=f6e8]: Carga manual activa. Si conectas el equipo por USB, puedes autocompletar sus datos y verificar periféricos.
+      - generic [ref=f6e9]:
+        - button "Escanear por USB" [ref=f6e10] [cursor=pointer]
+        - button "Cargar a mano" [ref=f6e11] [cursor=pointer]
+    - generic [ref=f6e12]:
+      - generic [ref=f6e13]:
+        - heading "Datos del equipo" [level=2] [ref=f6e14]
+        - generic [ref=f6e15]:
+          - generic [ref=f6e17]:
+            - generic [ref=f6e18]: Modelo comercial
+            - textbox "Modelo comercial" [ref=f6e19]:
+              - /placeholder: iPhone 12
+          - generic [ref=f6e20]:
+            - generic [ref=f6e21]: Código interno (ProductType)
+            - textbox "Código interno (ProductType)" [ref=f6e22]:
+              - /placeholder: iPhone13,2
+          - generic [ref=f6e23]:
+            - generic [ref=f6e24]: Capacidad
+            - textbox "Capacidad" [ref=f6e25]:
+              - /placeholder: 128 GB
+          - generic [ref=f6e26]:
+            - generic [ref=f6e27]: Versión de iOS
+            - textbox "Versión de iOS" [ref=f6e28]:
+              - /placeholder: 17.5.1
+          - generic [ref=f6e29]:
+            - generic [ref=f6e30]: IMEI
+            - textbox "IMEI" [ref=f6e31]:
+              - /placeholder: 15 dígitos
+          - generic [ref=f6e32]:
+            - generic [ref=f6e33]: Número de serie
+            - textbox "Número de serie" [ref=f6e34]
+          - generic [ref=f6e35]:
+            - generic [ref=f6e36]: Salud de batería (%)
+            - spinbutton "Salud de batería (%)" [ref=f6e37]
+          - generic [ref=f6e38]:
+            - generic [ref=f6e39]: Ciclos de batería
+            - spinbutton "Ciclos de batería" [ref=f6e40]
+      - generic [ref=f6e41]:
+        - generic [ref=f6e42]:
+          - heading "Checklist de ingreso" [level=2] [ref=f6e43]
+          - 'button "Equipo apagado: marcar todo como no probado" [ref=f6e44] [cursor=pointer]'
+        - generic [ref=f6e45]:
+          - generic [ref=f6e46]:
+            - heading "Funcionamiento" [level=3] [ref=f6e47]
+            - generic [ref=f6e48]:
+              - generic [ref=f6e50]:
+                - generic [ref=f6e51]: Pantalla y táctil
+                - button "Nota en Pantalla y táctil" [ref=f6e52] [cursor=pointer]: ✎
+                - group "Pantalla y táctil" [ref=f6e53]:
+                  - button "Bien" [ref=f6e54] [cursor=pointer]
+                  - button "Falla" [ref=f6e55] [cursor=pointer]
+                  - button "No probado" [ref=f6e56] [cursor=pointer]
+              - generic [ref=f6e58]:
+                - generic [ref=f6e59]: True Tone
+                - button "Nota en True Tone" [ref=f6e60] [cursor=pointer]: ✎
+                - group "True Tone" [ref=f6e61]:
+                  - button "Bien" [ref=f6e62] [cursor=pointer]
+                  - button "Falla" [ref=f6e63] [cursor=pointer]
+                  - button "No probado" [ref=f6e64] [cursor=pointer]
+              - generic [ref=f6e66]:
+                - generic [ref=f6e67]: Face ID
+                - button "Nota en Face ID" [ref=f6e68] [cursor=pointer]: ✎
+                - group "Face ID" [ref=f6e69]:
+                  - button "Bien" [ref=f6e70] [cursor=pointer]
+                  - button "Falla" [ref=f6e71] [cursor=pointer]
+                  - button "No probado" [ref=f6e72] [cursor=pointer]
+              - generic [ref=f6e74]:
+                - generic [ref=f6e75]: Cámara trasera
+                - button "Nota en Cámara trasera" [ref=f6e76] [cursor=pointer]: ✎
+                - group "Cámara trasera" [ref=f6e77]:
+                  - button "Bien" [ref=f6e78] [cursor=pointer]
+                  - button "Falla" [ref=f6e79] [cursor=pointer]
+                  - button "No probado" [ref=f6e80] [cursor=pointer]
+              - generic [ref=f6e82]:
+                - generic [ref=f6e83]: Cámara frontal
+                - button "Nota en Cámara frontal" [ref=f6e84] [cursor=pointer]: ✎
+                - group "Cámara frontal" [ref=f6e85]:
+                  - button "Bien" [ref=f6e86] [cursor=pointer]
+                  - button "Falla" [ref=f6e87] [cursor=pointer]
+                  - button "No probado" [ref=f6e88] [cursor=pointer]
+              - generic [ref=f6e90]:
+                - generic [ref=f6e91]: Parlante
+                - button "Nota en Parlante" [ref=f6e92] [cursor=pointer]: ✎
+                - group "Parlante" [ref=f6e93]:
+                  - button "Bien" [ref=f6e94] [cursor=pointer]
+                  - button "Falla" [ref=f6e95] [cursor=pointer]
+                  - button "No probado" [ref=f6e96] [cursor=pointer]
+              - generic [ref=f6e98]:
+                - generic [ref=f6e99]: Auricular
+                - button "Nota en Auricular" [ref=f6e100] [cursor=pointer]: ✎
+                - group "Auricular" [ref=f6e101]:
+                  - button "Bien" [ref=f6e102] [cursor=pointer]
+                  - button "Falla" [ref=f6e103] [cursor=pointer]
+                  - button "No probado" [ref=f6e104] [cursor=pointer]
+              - generic [ref=f6e106]:
+                - generic [ref=f6e107]: Micrófonos
+                - button "Nota en Micrófonos" [ref=f6e108] [cursor=pointer]: ✎
+                - group "Micrófonos" [ref=f6e109]:
+                  - button "Bien" [ref=f6e110] [cursor=pointer]
+                  - button "Falla" [ref=f6e111] [cursor=pointer]
+                  - button "No probado" [ref=f6e112] [cursor=pointer]
+              - generic [ref=f6e114]:
+                - generic [ref=f6e115]: Carga
+                - button "Nota en Carga" [ref=f6e116] [cursor=pointer]: ✎
+                - group "Carga" [ref=f6e117]:
+                  - button "Bien" [ref=f6e118] [cursor=pointer]
+                  - button "Falla" [ref=f6e119] [cursor=pointer]
+                  - button "No probado" [ref=f6e120] [cursor=pointer]
+              - generic [ref=f6e122]:
+                - generic [ref=f6e123]: Botones
+                - button "Nota en Botones" [ref=f6e124] [cursor=pointer]: ✎
+                - group "Botones" [ref=f6e125]:
+                  - button "Bien" [ref=f6e126] [cursor=pointer]
+                  - button "Falla" [ref=f6e127] [cursor=pointer]
+                  - button "No probado" [ref=f6e128] [cursor=pointer]
+              - generic [ref=f6e130]:
+                - generic [ref=f6e131]: Vibrador
+                - button "Nota en Vibrador" [ref=f6e132] [cursor=pointer]: ✎
+                - group "Vibrador" [ref=f6e133]:
+                  - button "Bien" [ref=f6e134] [cursor=pointer]
+                  - button "Falla" [ref=f6e135] [cursor=pointer]
+                  - button "No probado" [ref=f6e136] [cursor=pointer]
+              - generic [ref=f6e138]:
+                - generic [ref=f6e139]: Wi-Fi y señal
+                - button "Nota en Wi-Fi y señal" [ref=f6e140] [cursor=pointer]: ✎
+                - group "Wi-Fi y señal" [ref=f6e141]:
+                  - button "Bien" [ref=f6e142] [cursor=pointer]
+                  - button "Falla" [ref=f6e143] [cursor=pointer]
+                  - button "No probado" [ref=f6e144] [cursor=pointer]
+              - generic [ref=f6e146]:
+                - generic [ref=f6e147]: Sensor de proximidad
+                - button "Nota en Sensor de proximidad" [ref=f6e148] [cursor=pointer]: ✎
+                - group "Sensor de proximidad" [ref=f6e149]:
+                  - button "Bien" [ref=f6e150] [cursor=pointer]
+                  - button "Falla" [ref=f6e151] [cursor=pointer]
+                  - button "No probado" [ref=f6e152] [cursor=pointer]
+          - generic [ref=f6e153]:
+            - heading "Condición y antecedentes" [level=3] [ref=f6e154]
+            - generic [ref=f6e155]:
+              - generic [ref=f6e157]:
+                - generic [ref=f6e158]: Apertura previa
+                - button "Nota en Apertura previa" [ref=f6e159] [cursor=pointer]: ✎
+                - group "Apertura previa" [ref=f6e160]:
+                  - button "Sin señales" [ref=f6e161] [cursor=pointer]
+                  - button "Con señales" [ref=f6e162] [cursor=pointer]
+              - generic [ref=f6e164]:
+                - generic [ref=f6e165]: Indicador de humedad
+                - button "Nota en Indicador de humedad" [ref=f6e166] [cursor=pointer]: ✎
+                - group "Indicador de humedad" [ref=f6e167]:
+                  - button "Sin indicio" [ref=f6e168] [cursor=pointer]
+                  - button "Activado" [ref=f6e169] [cursor=pointer]
+              - generic [ref=f6e171]:
+                - generic [ref=f6e172]: Vidrio trasero
+                - button "Nota en Vidrio trasero" [ref=f6e173] [cursor=pointer]: ✎
+                - group "Vidrio trasero" [ref=f6e174]:
+                  - button "Sano" [ref=f6e175] [cursor=pointer]
+                  - button "Rayado" [ref=f6e176] [cursor=pointer]
+                  - button "Trizado" [ref=f6e177] [cursor=pointer]
+              - generic [ref=f6e179]:
+                - generic [ref=f6e180]: Chasis
+                - button "Nota en Chasis" [ref=f6e181] [cursor=pointer]: ✎
+                - group "Chasis" [ref=f6e182]:
+                  - button "Sano" [ref=f6e183] [cursor=pointer]
+                  - button "Golpes" [ref=f6e184] [cursor=pointer]
+                  - button "Doblado" [ref=f6e185] [cursor=pointer]
+      - generic [ref=f6e186]:
+        - heading "Motivo y recepción" [level=2] [ref=f6e187]
+        - generic [ref=f6e188]:
+          - generic [ref=f6e190]:
+            - generic [ref=f6e191]: Qué pidió el cliente
+            - textbox "Qué pidió el cliente" [ref=f6e192]:
+              - /placeholder: Cambio de batería
+          - generic [ref=f6e193]:
+            - generic [ref=f6e194]: Quién lo trajo
+            - textbox "Quién lo trajo" [ref=f6e195]
+          - generic [ref=f6e196]:
+            - generic [ref=f6e197]: Teléfono de contacto
+            - textbox "Teléfono de contacto" [ref=f6e198]
+          - generic [ref=f6e199]:
+            - generic [ref=f6e200]: Observación general del ingreso
+            - textbox "Observación general del ingreso" [ref=f6e201]
+      - button "Guardar ingreso" [ref=f6e203] [cursor=pointer]
+  - button "Open Next.js Dev Tools" [ref=f6e209] [cursor=pointer]
