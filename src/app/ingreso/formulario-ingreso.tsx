@@ -2,6 +2,8 @@
 
 import { useActionState, useState } from 'react'
 import { Campo } from '@/componentes/campo'
+import { Checklist } from '@/componentes/checklist'
+import type { Checklist as ValorChecklist, LineaCatalogo } from '@/dominio/checklist'
 import type { DatosIngreso } from '@/dominio/ficha'
 import { resolverModelo } from '@/dominio/modelos-iphone'
 
@@ -14,14 +16,23 @@ type PropsFormularioIngreso = {
   accionGuardar: (previo: EstadoAccionIngreso, formData: FormData) => Promise<EstadoAccionIngreso>
   estadoInicial: EstadoAccionIngreso
   tablaModelos: Record<string, string>
+  lineasCatalogo: LineaCatalogo[]
+  catalogoVersion: number
 }
 
-export function FormularioIngreso({ accionGuardar, estadoInicial, tablaModelos }: PropsFormularioIngreso) {
+export function FormularioIngreso({
+  accionGuardar,
+  estadoInicial,
+  tablaModelos,
+  lineasCatalogo,
+  catalogoVersion,
+}: PropsFormularioIngreso) {
   const [estado, despachar, guardando] = useActionState(accionGuardar, estadoInicial)
   const d = estado.datos
 
   const [modeloProducto, setModeloProducto] = useState(d.modeloProducto ?? '')
   const [modeloComercial, setModeloComercial] = useState(d.modeloComercial)
+  const [checklist, setChecklist] = useState<ValorChecklist>(d.checklistIngreso)
   const [avisoUsb, setAvisoUsb] = useState(
     'Carga manual activa. Si no hay lectura por USB, puedes ingresar el equipo igual con los datos que tengas.',
   )
@@ -35,6 +46,19 @@ export function FormularioIngreso({ accionGuardar, estadoInicial, tablaModelos }
     if (!r.requiereConfirmacion && r.modeloComercial) {
       setModeloComercial(r.modeloComercial)
     }
+  }
+
+  function marcarFuncionamientoNoProbado() {
+    const actualizado: ValorChecklist = { ...checklist }
+    for (const linea of lineasCatalogo) {
+      if (linea.bloque === 'funcionamiento') {
+        const notaExistente = actualizado[linea.clave]?.nota
+        actualizado[linea.clave] = notaExistente
+          ? { estado: 'No probado', nota: notaExistente }
+          : { estado: 'No probado' }
+      }
+    }
+    setChecklist(actualizado)
   }
 
   return (
@@ -72,6 +96,8 @@ export function FormularioIngreso({ accionGuardar, estadoInicial, tablaModelos }
       ) : null}
 
       <form action={despachar}>
+        <input type="hidden" name="catalogoVersion" value={catalogoVersion} />
+
         <section className="seccion">
           <h2 className="subtitulo">Datos del equipo</h2>
           <div className="formulario">
@@ -138,6 +164,25 @@ export function FormularioIngreso({ accionGuardar, estadoInicial, tablaModelos }
               editable
             />
           </div>
+        </section>
+
+        <section className="seccion">
+          <div className="acciones" style={{ justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+            <h2 className="subtitulo" style={{ margin: 0, borderBottom: 0 }}>
+              Checklist de ingreso
+            </h2>
+            {lineasCatalogo.length > 0 ? (
+              <button type="button" className="boton-secundario" onClick={marcarFuncionamientoNoProbado}>
+                Equipo apagado: marcar todo como no probado
+              </button>
+            ) : null}
+          </div>
+          <Checklist
+            lineas={lineasCatalogo}
+            valor={checklist}
+            onChange={setChecklist}
+            nombreCampo="checklistIngreso"
+          />
         </section>
 
         <section className="seccion">

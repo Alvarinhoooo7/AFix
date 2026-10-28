@@ -1,14 +1,16 @@
 import { redirect } from 'next/navigation'
+import { catalogoActivo } from '@/datos/catalogo'
 import { intentarGuardarIngreso } from '@/datos/fichas'
 import { cargarTablaModelos } from '@/datos/modelos'
 import { obtenerDb } from '@/db/cliente'
+import { limpiarChecklist, type Checklist, type LineaCatalogo } from '@/dominio/checklist'
 import type { DatosIngreso } from '@/dominio/ficha'
 import { resolverModelo } from '@/dominio/modelos-iphone'
 import { FormularioIngreso, type EstadoAccionIngreso } from './formulario-ingreso'
 
 export const metadata = { title: 'Ingreso de equipo — AFIX' }
 
-function datosVacios(): DatosIngreso {
+function datosVacios(catalogoVersion = 1): DatosIngreso {
   return {
     imei: null,
     numeroSerie: null,
@@ -23,7 +25,7 @@ function datosVacios(): DatosIngreso {
     telefono: null,
     observacionIngreso: '',
     checklistIngreso: {},
-    catalogoVersion: 1,
+    catalogoVersion,
     origenDatos: 'manual',
   }
 }
@@ -40,6 +42,17 @@ function enteroOpcional(formData: FormData, campo: string): number | null {
   return Number.isNaN(numero) ? null : numero
 }
 
+function leerChecklistForm(formData: FormData, campo: string): Checklist {
+  const bruto = String(formData.get(campo) ?? '').trim()
+  if (!bruto) return {}
+  try {
+    const parsed = JSON.parse(bruto) as Checklist
+    return limpiarChecklist(parsed)
+  } catch {
+    return {}
+  }
+}
+
 async function guardarIngresoAccion(_previo: EstadoAccionIngreso, formData: FormData): Promise<EstadoAccionIngreso> {
   'use server'
   let tabla = new Map<string, string>()
@@ -54,6 +67,8 @@ async function guardarIngresoAccion(_previo: EstadoAccionIngreso, formData: Form
   const modeloComercial =
     modeloEscrito !== '' ? modeloEscrito : resolverModelo(modeloProducto, tabla).modeloComercial
 
+  const versionLeida = enteroOpcional(formData, 'catalogoVersion') ?? 1
+
   const datos: DatosIngreso = {
     imei: textoOpcional(formData, 'imei'),
     numeroSerie: textoOpcional(formData, 'numeroSerie'),
@@ -67,8 +82,8 @@ async function guardarIngresoAccion(_previo: EstadoAccionIngreso, formData: Form
     quienLoTrajo: textoOpcional(formData, 'quienLoTrajo'),
     telefono: textoOpcional(formData, 'telefono'),
     observacionIngreso: String(formData.get('observacionIngreso') ?? '').trim(),
-    checklistIngreso: {},
-    catalogoVersion: 1,
+    checklistIngreso: leerChecklistForm(formData, 'checklistIngreso'),
+    catalogoVersion: versionLeida,
     origenDatos: 'manual',
   }
 
@@ -81,8 +96,13 @@ async function guardarIngresoAccion(_previo: EstadoAccionIngreso, formData: Form
 
 export default async function PaginaIngreso() {
   let tabla = new Map<string, string>()
+  let lineas: LineaCatalogo[] = []
+  let version = 1
   try {
-    tabla = await cargarTablaModelos()
+    const [tablaCargada, catalogo] = await Promise.all([cargarTablaModelos(), catalogoActivo()])
+    tabla = tablaCargada
+    lineas = catalogo.lineas
+    version = catalogo.version
   } catch {
     // Permite abrir la pantalla y escribir a mano aunque la base no responda en ese instante.
   }
@@ -99,8 +119,10 @@ export default async function PaginaIngreso() {
 
       <FormularioIngreso
         accionGuardar={guardarIngresoAccion}
-        estadoInicial={{ mensaje: null, datos: datosVacios() }}
+        estadoInicial={{ mensaje: null, datos: datosVacios(version) }}
         tablaModelos={Object.fromEntries(tabla)}
+        lineasCatalogo={lineas}
+        catalogoVersion={version}
       />
     </main>
   )

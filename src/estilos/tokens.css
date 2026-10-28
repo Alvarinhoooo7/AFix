@@ -283,3 +283,106 @@ body {
   min-height: 4.5rem;
   resize: vertical;
 }
+
+/* Checklist de pauta: filas de casillas con colores de tinta o timbre */
+.checklist {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.checklist-bloque-titulo {
+  font-family: var(--fuente-estrecha);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-secundario);
+  margin: 0 0 0.5rem;
+}
+
+.checklist-tabla {
+  border: 1px solid var(--color-linea);
+  background: var(--color-fondo);
+}
+
+.checklist-fila {
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid var(--color-linea);
+}
+
+.checklist-fila:last-child {
+  border-bottom: 0;
+}
+
+.checklist-fila-principal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.checklist-etiqueta {
+  flex: 1 1 11rem;
+  font-size: 0.9375rem;
+}
+
+.boton-nota {
+  font-family: var(--fuente-base);
+  font-size: 0.95rem;
+  color: var(--color-secundario);
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 0.2rem 0.45rem;
+  cursor: pointer;
+}
+
+.boton-nota-activa {
+  color: var(--color-tinta);
+  border-color: var(--color-linea);
+  background: var(--color-campo);
+}
+
+.checklist-estados {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.casilla {
+  font-family: var(--fuente-estrecha);
+  font-size: 0.8125rem;
+  padding: 0.25rem 0.65rem;
+  border: 1px solid var(--color-linea);
+  background: transparent;
+  color: var(--color-linea);
+  cursor: pointer;
+  border-radius: 1px;
+}
+
+.casilla-activa {
+  background: var(--color-tinta);
+  border-color: var(--color-tinta);
+  color: var(--color-fondo);
+  font-weight: 600;
+}
+
+.casilla-alerta {
+  background: var(--color-timbre);
+  border-color: var(--color-timbre);
+  color: var(--color-fondo);
+  font-weight: 600;
+}
+
+.casilla-neutra {
+  background: var(--color-linea);
+  border-color: var(--color-linea);
+  color: var(--color-fondo);
+  font-weight: 600;
+}
+
+.checklist-nota-contenedor {
+  margin-top: 0.5rem;
+}
+
+.checklist-nota-entrada {
+  font-size: 0.875rem;
+  min-height: 2rem;
+}

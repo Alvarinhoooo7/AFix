@@ -15,6 +15,7 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core'
+import type { Checklist } from '@/dominio/checklist'
 
 export const estadoFicha = pgEnum('estado_ficha', ['en_taller', 'entregado', 'entregado_sin_reparar'])
 export const origenDatos = pgEnum('origen_datos', ['usb', 'manual', 'mixto'])
@@ -55,12 +56,12 @@ export const ficha = pgTable('ficha', {
   codigoProtegido: boolean('codigo_protegido'),
   estadoActivacion: text('estado_activacion'),
   origenDatos: origenDatos('origen_datos').notNull().default('manual'),
-  trabajosRealizados: jsonb('trabajos_realizados').notNull().default(sql`'[]'::jsonb`),
+  trabajosRealizados: jsonb('trabajos_realizados').notNull().default(sql`'[]'::jsonb`).$type<string[]>(),
   notaReparacion: text('nota_reparacion').notNull().default(''),
   observacionIngreso: text('observacion_ingreso').notNull().default(''),
   observacionSalida: text('observacion_salida').notNull().default(''),
-  checklistIngreso: jsonb('checklist_ingreso').notNull().default(sql`'{}'::jsonb`),
-  checklistSalida: jsonb('checklist_salida').notNull().default(sql`'{}'::jsonb`),
+  checklistIngreso: jsonb('checklist_ingreso').notNull().default(sql`'{}'::jsonb`).$type<Checklist>(),
+  checklistSalida: jsonb('checklist_salida').notNull().default(sql`'{}'::jsonb`).$type<Checklist>(),
   catalogoVersion: integer('catalogo_version'),
 })
 

@@ -17,3 +17,14 @@ export function validarChecklist(checklist: Checklist, lineas: LineaCatalogo[]):
     .filter(([clave, { estado }]) => !porClave.get(clave)?.estados.includes(estado))
     .map(([clave]) => clave)
 }
+
+/** Recorta las notas escritas y descarta las vacías para que no ocupen lugar en la ficha. */
+export function limpiarChecklist(checklist: Checklist): Checklist {
+  const limpio: Checklist = {}
+  for (const [clave, valor] of Object.entries(checklist)) {
+    if (!valor || typeof valor.estado !== 'string') continue
+    const nota = valor.nota?.trim()
+    limpio[clave] = nota ? { estado: valor.estado, nota } : { estado: valor.estado }
+  }
+  return limpio
+}

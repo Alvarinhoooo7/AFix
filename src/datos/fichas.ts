@@ -3,6 +3,7 @@ import { catalogoActivo } from '@/datos/catalogo'
 import type { Ficha } from '@/datos/equipos'
 import { obtenerDb, type DrizzleDb } from '@/db/cliente'
 import { equipo, ficha, notaPosterior } from '@/db/esquema'
+import { limpiarChecklist } from '@/dominio/checklist'
 import { normalizarImei } from '@/dominio/equipo'
 import { transicionPermitida, type DatosIngreso } from '@/dominio/ficha'
 
@@ -58,7 +59,7 @@ export async function crearFicha(datos: EntradaIngreso, db: DrizzleDb = obtenerD
         quienLoTrajo: datos.quienLoTrajo,
         telefono: datos.telefono,
         observacionIngreso: datos.observacionIngreso,
-        checklistIngreso: datos.checklistIngreso,
+        checklistIngreso: limpiarChecklist(datos.checklistIngreso),
         catalogoVersion,
         origenDatos: datos.origenDatos,
       })
@@ -115,9 +116,22 @@ export async function actualizarFicha(numero: number, cambios: Partial<Ficha>): 
   if (reservado) {
     throw new Error(`El campo "${reservado}" no se edita con actualizarFicha; para cerrar la ficha usa cerrarFicha.`)
   }
+  const cambiosLimpios: Partial<Ficha> = { ...cambios }
+  if (cambiosLimpios.checklistIngreso) {
+    cambiosLimpios.checklistIngreso = limpiarChecklist(cambiosLimpios.checklistIngreso)
+  }
+  if (cambiosLimpios.checklistSalida) {
+    cambiosLimpios.checklistSalida = limpiarChecklist(cambiosLimpios.checklistSalida)
+  }
+  if (Object.keys(cambiosLimpios).length === 0) {
+    const actual = await obtenerFicha(numero)
+    if (!actual) throw errorInexistente(numero)
+    if (actual.congeladaEn !== null) throw errorCongelada(numero)
+    return actual
+  }
   const [actualizada] = await obtenerDb()
     .update(ficha)
-    .set(cambios)
+    .set(cambiosLimpios)
     .where(and(eq(ficha.numero, numero), isNull(ficha.congeladaEn)))
     .returning()
   if (!actualizada) throw await explicarRechazo(numero)
