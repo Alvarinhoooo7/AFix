@@ -494,3 +494,65 @@ body {
   font-size: 0.875rem;
   color: var(--color-secundario);
 }
+
+/* Panel de verificación y hardware detectado por USB */
+.panel-perifericos {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-linea);
+}
+
+.panel-perifericos-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.panel-perifericos-titulo {
+  font-family: var(--fuente-estrecha);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tabla-perifericos {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  border: 1px solid var(--color-linea);
+}
+
+.tabla-perifericos th,
+.tabla-perifericos td {
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid var(--color-linea);
+  text-align: left;
+}
+
+.tabla-perifericos th {
+  font-family: var(--fuente-estrecha);
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: var(--color-campo);
+  color: var(--color-secundario);
+}
+
+.tabla-perifericos tr:last-child td {
+  border-bottom: 0;
+}
+
+.codigo-serial {
+  font-family: monospace;
+  font-size: 0.8125rem;
+  background: var(--color-campo);
+  padding: 0.1rem 0.35rem;
+  border: 1px solid var(--color-linea);
+}
+
