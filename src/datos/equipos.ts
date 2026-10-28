@@ -1,10 +1,16 @@
-import { and, eq } from 'drizzle-orm'
+import { and, desc, eq } from 'drizzle-orm'
 import { obtenerDb } from '@/db/cliente'
 import { equipo, ficha } from '@/db/esquema'
 import { normalizarImei } from '@/dominio/equipo'
 
 export type Equipo = typeof equipo.$inferSelect
 export type Ficha = typeof ficha.$inferSelect
+
+export type EntradaHistorialImei = {
+  numero: number
+  trabajos: string[]
+  entregadoEn: Date
+}
 
 const CAMPOS_IDENTIDAD = [
   'imei',
@@ -49,6 +55,25 @@ export async function obtenerEquipo(id: string): Promise<Equipo | null> {
 
 export async function fichasDeEquipo(equipoId: string): Promise<Ficha[]> {
   return obtenerDb().select().from(ficha).where(eq(ficha.equipoId, equipoId)).orderBy(ficha.numero)
+}
+
+/**
+ * Devuelve las fichas anteriores asociadas a un IMEI, de la más nueva a la más vieja.
+ * Si el IMEI no tiene historia o no es válido, devuelve lista vacía.
+ */
+export async function historialDeImei(imei: string): Promise<EntradaHistorialImei[]> {
+  const encontrado = await buscarPorImei(imei)
+  if (!encontrado) return []
+  const filas = await obtenerDb()
+    .select()
+    .from(ficha)
+    .where(eq(ficha.equipoId, encontrado.id))
+    .orderBy(desc(ficha.numero))
+  return filas.map((f) => ({
+    numero: f.numero,
+    trabajos: Array.isArray(f.trabajosRealizados) ? f.trabajosRealizados : [],
+    entregadoEn: f.entregadoEn ?? f.recibidoEn,
+  }))
 }
 
 /**

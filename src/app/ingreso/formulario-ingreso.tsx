@@ -1,9 +1,11 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import { useActionState, useState, useTransition } from 'react'
+import { AvisoEquipoConocido, type ItemHistorialEquipo } from '@/componentes/aviso-equipo-conocido'
 import { Campo } from '@/componentes/campo'
 import { Checklist } from '@/componentes/checklist'
 import type { Checklist as ValorChecklist, LineaCatalogo } from '@/dominio/checklist'
+import { normalizarImei } from '@/dominio/equipo'
 import type { DatosIngreso } from '@/dominio/ficha'
 import { resolverModelo } from '@/dominio/modelos-iphone'
 
@@ -14,22 +16,29 @@ export type EstadoAccionIngreso = {
 
 type PropsFormularioIngreso = {
   accionGuardar: (previo: EstadoAccionIngreso, formData: FormData) => Promise<EstadoAccionIngreso>
+  accionConsultarImei?: (imei: string) => Promise<ItemHistorialEquipo[]>
   estadoInicial: EstadoAccionIngreso
   tablaModelos: Record<string, string>
   lineasCatalogo: LineaCatalogo[]
   catalogoVersion: number
+  historialInicial?: ItemHistorialEquipo[]
 }
 
 export function FormularioIngreso({
   accionGuardar,
+  accionConsultarImei,
   estadoInicial,
   tablaModelos,
   lineasCatalogo,
   catalogoVersion,
+  historialInicial = [],
 }: PropsFormularioIngreso) {
   const [estado, despachar, guardando] = useActionState(accionGuardar, estadoInicial)
   const d = estado.datos
 
+  const [imei, setImei] = useState(d.imei ?? '')
+  const [historialImei, setHistorialImei] = useState<ItemHistorialEquipo[]>(historialInicial)
+  const [, iniciarTransicion] = useTransition()
   const [modeloProducto, setModeloProducto] = useState(d.modeloProducto ?? '')
   const [modeloComercial, setModeloComercial] = useState(d.modeloComercial)
   const [checklist, setChecklist] = useState<ValorChecklist>(d.checklistIngreso)
@@ -39,6 +48,21 @@ export function FormularioIngreso({
 
   const mapaModelos = new Map(Object.entries(tablaModelos))
   const resolucion = resolverModelo(modeloProducto || null, mapaModelos)
+
+  function cambiarImei(nuevoImei: string) {
+    setImei(nuevoImei)
+    const normalizado = normalizarImei(nuevoImei)
+    if (!normalizado) {
+      setHistorialImei([])
+      return
+    }
+    if (accionConsultarImei) {
+      iniciarTransicion(async () => {
+        const encontrado = await accionConsultarImei(normalizado)
+        setHistorialImei(encontrado)
+      })
+    }
+  }
 
   function cambiarProductType(codigo: string) {
     setModeloProducto(codigo)
@@ -63,6 +87,8 @@ export function FormularioIngreso({
 
   return (
     <>
+      <AvisoEquipoConocido historial={historialImei} />
+
       <div className="franja-usb" role="region" aria-label="Modo de carga de datos">
         <p className="franja-usb-texto">{avisoUsb}</p>
         <div className="acciones">
@@ -139,7 +165,8 @@ export function FormularioIngreso({
             <Campo
               etiqueta="IMEI"
               nombre="imei"
-              valor={d.imei}
+              valor={imei}
+              onChange={cambiarImei}
               placeholder="15 dígitos"
               editable
             />

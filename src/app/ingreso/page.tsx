@@ -1,5 +1,7 @@
 import { redirect } from 'next/navigation'
+import type { ItemHistorialEquipo } from '@/componentes/aviso-equipo-conocido'
 import { catalogoActivo } from '@/datos/catalogo'
+import { historialDeImei } from '@/datos/equipos'
 import { intentarGuardarIngreso } from '@/datos/fichas'
 import { cargarTablaModelos } from '@/datos/modelos'
 import { obtenerDb } from '@/db/cliente'
@@ -50,6 +52,15 @@ function leerChecklistForm(formData: FormData, campo: string): Checklist {
     return limpiarChecklist(parsed)
   } catch {
     return {}
+  }
+}
+
+async function consultarHistorialAccion(imei: string): Promise<ItemHistorialEquipo[]> {
+  'use server'
+  try {
+    return await historialDeImei(imei)
+  } catch {
+    return []
   }
 }
 
@@ -119,6 +130,7 @@ export default async function PaginaIngreso() {
 
       <FormularioIngreso
         accionGuardar={guardarIngresoAccion}
+        accionConsultarImei={consultarHistorialAccion}
         estadoInicial={{ mensaje: null, datos: datosVacios(version) }}
         tablaModelos={Object.fromEntries(tabla)}
         lineasCatalogo={lineas}
