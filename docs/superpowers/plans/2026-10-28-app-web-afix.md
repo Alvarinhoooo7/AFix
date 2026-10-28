@@ -45,10 +45,14 @@ supabase/
   config.toml                        supabase init
   migrations/
     0001_esquema_inicial.sql         equipo, ficha, ajustes_taller (Tarea 1)
-    0002_catalogo_checklist.sql      catalogo_checklist + semilla v1 (Tarea 2)
-    0004_notas_posteriores.sql       notas sobre fichas congeladas (Tarea 4)
-    0005_modelos_iphone.sql          ProductType -> modelo comercial (Tarea 5)
-    # los huecos de numeración son inofensivos: el CLI solo exige orden ascendente
+    0003_cerrar_api_publica.sql      RLS y revokes (Tarea 1, ronda de arreglo)
+    0004_catalogo_checklist.sql      catalogo_checklist + semilla v1 (Tarea 2)
+    0005_notas_posteriores.sql       notas sobre fichas congeladas (Tarea 4)
+    0006_modelos_iphone.sql          ProductType -> modelo comercial (Tarea 5)
+    0007_indices_busqueda.sql        índices del buscador (Tarea 12)
+    # Las migraciones se numeran en ORDEN DE CREACIÓN, no por número de tarea.
+    # Cada tarea toma el siguiente número libre. Nunca insertes una migración
+    # con número menor al de la última ya aplicada: el CLI la rechaza o la saltea.
 src/
   db/
     cliente.ts                       conexión Postgres, una por proceso
@@ -175,7 +179,7 @@ git commit -m "feat: esquema inicial y Postgres local"
 ### Task 2: Catálogo de checklist versionado
 
 **Files:**
-- Create: `supabase/migrations/0002_catalogo_checklist.sql`
+- Create: `supabase/migrations/0004_catalogo_checklist.sql`
 - Create: `src/dominio/checklist.ts`, `src/datos/catalogo.ts`
 - Test: `tests/dominio/checklist.test.ts`, `tests/datos/catalogo.test.ts`
 
@@ -226,7 +230,7 @@ test('validarChecklist acepta un checklist vacío', () => {
 Run: `npx vitest run tests/dominio/checklist.test.ts tests/datos/catalogo.test.ts`
 Expected: FAIL.
 
-- [ ] **Step 3: Escribir `0002_catalogo_checklist.sql` con la semilla y aplicarlo**
+- [ ] **Step 3: Escribir `0004_catalogo_checklist.sql` con la semilla y aplicarlo**
 
 Run: `supabase migration up`
 
@@ -405,7 +409,7 @@ Expected: FAIL.
 
 - [ ] **Step 3: Agregar `nota_posterior` al esquema**
 
-Migración `0004_notas_posteriores.sql`: tabla con `ficha_numero`, `texto`, `creada_en`. Aplicar con `supabase migration up`.
+Migración `0005_notas_posteriores.sql`: tabla con `ficha_numero`, `texto`, `creada_en`. Aplicar con `supabase migration up`.
 
 - [ ] **Step 4: Implementar `src/dominio/ficha.ts` y `src/datos/fichas.ts`**
 
@@ -425,7 +429,7 @@ git add -A && git commit -m "feat: estados de ficha, correlativo y congelado"
 ### Task 5: ProductType a modelo comercial
 
 **Files:**
-- Create: `supabase/migrations/0005_modelos_iphone.sql`, `src/dominio/modelos-iphone.ts`
+- Create: `supabase/migrations/0006_modelos_iphone.sql`, `src/dominio/modelos-iphone.ts`
 - Test: `tests/dominio/modelos-iphone.test.ts`
 
 **Interfaces:**
@@ -892,7 +896,7 @@ Expected: FAIL.
 
 - [ ] **Step 3: Implementar las consultas y la pantalla de inicio**
 
-Búsqueda insensible a mayúsculas y acentos. Agregar los índices que las consultas necesiten en una migración.
+Búsqueda insensible a mayúsculas y acentos. Agregar los índices que las consultas necesiten en `0007_indices_busqueda.sql`.
 
 - [ ] **Step 4: Correr y verificar que pasan**
 
