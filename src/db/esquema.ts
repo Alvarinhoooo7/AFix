@@ -1,5 +1,6 @@
-// Espeja supabase/migrations/0001_esquema_inicial.sql. Drizzle no genera ni aplica
-// migraciones: solo da consultas tipadas sobre este esquema escrito a mano.
+// Espeja a mano las tablas creadas en supabase/migrations/. Drizzle no genera ni aplica
+// migraciones: solo da consultas tipadas sobre este esquema. Al agregar una tabla en una
+// migracion, se agrega aqui tambien.
 import { sql } from 'drizzle-orm'
 import {
   boolean,

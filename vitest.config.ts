@@ -17,6 +17,9 @@ export default defineConfig({
   resolve: { alias: { '@': resolve(process.cwd(), 'src') } },
   test: {
     include: ['tests/**/*.test.ts'],
+    // Serial a proposito: todos los archivos comparten una sola base de pruebas y algunos
+    // insertan filas temporales (p. ej. una version 2 del catalogo) que otros archivos
+    // verian si corrieran en paralelo. No volver a paralelo sin aislar la base por archivo.
     fileParallelism: false,
     globalSetup: ['tests/preparar-bd.ts'],
   },

@@ -5,11 +5,16 @@ import type { Catalogo, LineaCatalogo } from '@/dominio/checklist'
 
 type Fila = typeof catalogoChecklist.$inferSelect
 
+function bloqueValido(bloque: string): LineaCatalogo['bloque'] {
+  if (bloque === 'funcionamiento' || bloque === 'condicion') return bloque
+  throw new Error(`El bloque "${bloque}" del catálogo de checklist no es válido.`)
+}
+
 function aLinea(f: Fila): LineaCatalogo {
   return {
     clave: f.clave,
     etiqueta: f.etiqueta,
-    bloque: f.bloque as LineaCatalogo['bloque'],
+    bloque: bloqueValido(f.bloque),
     orden: f.orden,
     estados: f.estados,
   }

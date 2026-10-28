@@ -41,12 +41,28 @@ test('catalogoPorVersion devuelve la versión pedida y falla si no existe', asyn
   await expect(catalogoPorVersion(999)).rejects.toThrow(/999/)
 })
 
+test('una versión nueva que reutiliza una clave no cambia la etiqueta de la versión 1', async () => {
+  try {
+    await sql`insert into catalogo_checklist (version, clave, etiqueta, bloque, orden, estados)
+      values (2, 'face_id', 'Reconocimiento facial', 'funcionamiento', 1, '["Bien","Falla"]'::jsonb)`
+    const v1 = await catalogoPorVersion(1)
+    const faceId = v1.lineas.find((l) => l.clave === 'face_id')!
+    expect(faceId.etiqueta).toBe('Face ID')
+    expect(faceId.estados).toEqual(['Bien', 'Falla', 'No probado'])
+    const v2 = await catalogoPorVersion(2)
+    expect(v2.lineas[0].etiqueta).toBe('Reconocimiento facial')
+  } finally {
+    await sql`delete from catalogo_checklist where version = 2`
+  }
+})
+
 test('una versión nueva no altera la vieja y todosLosCatalogos trae ambas', async () => {
   try {
     await sql`insert into catalogo_checklist (version, clave, etiqueta, bloque, orden, estados)
       values (2, 'linea_nueva', 'Línea nueva', 'funcionamiento', 1, '["Bien","Falla"]'::jsonb)`
     expect((await catalogoActivo()).version).toBe(2)
-    expect(await catalogoPorVersion(1)).toHaveProperty('lineas.length', 17)
+    const v1 = await catalogoPorVersion(1)
+    expect(v1.lineas).toHaveLength(17)
     const todos = await todosLosCatalogos()
     expect(todos.map((c) => c.version)).toEqual([1, 2])
   } finally {
