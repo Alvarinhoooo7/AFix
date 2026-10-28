@@ -5,6 +5,19 @@ type Ficha = typeof ficha.$inferSelect
 
 export type EstadoFicha = 'en_taller' | 'entregado' | 'entregado_sin_reparar'
 
+export const TRABAJOS: readonly string[] = [
+  'Batería',
+  'Pantalla',
+  'Parlante',
+  'Auricular',
+  'Cámara trasera',
+  'Cámara frontal',
+  'Puerto de carga',
+  'Vibrador',
+  'Botones',
+  'Vidrio trasero',
+] as const
+
 export type DatosIngreso = {
   imei: string | null
   numeroSerie: string | null
