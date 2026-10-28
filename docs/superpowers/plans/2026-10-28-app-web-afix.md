@@ -44,9 +44,11 @@ Clases de entrada que el diseño implica y que ninguna prueba del camino feliz t
 supabase/
   config.toml                        supabase init
   migrations/
-    0001_esquema_inicial.sql         equipo, ficha, ajustes_taller
-    0002_catalogo_checklist.sql      catalogo_checklist + semilla v1
-    0003_modelos_iphone.sql          ProductType -> modelo comercial
+    0001_esquema_inicial.sql         equipo, ficha, ajustes_taller (Tarea 1)
+    0002_catalogo_checklist.sql      catalogo_checklist + semilla v1 (Tarea 2)
+    0004_notas_posteriores.sql       notas sobre fichas congeladas (Tarea 4)
+    0005_modelos_iphone.sql          ProductType -> modelo comercial (Tarea 5)
+    # los huecos de numeración son inofensivos: el CLI solo exige orden ascendente
 src/
   db/
     cliente.ts                       conexión Postgres, una por proceso
@@ -102,7 +104,7 @@ tests/
 - Consumes: nada.
 - Produces: `obtenerDb(): DrizzleDb` desde `src/db/cliente.ts`. Tablas Drizzle exportadas desde `src/db/esquema.ts`: `equipo`, `ficha`, `ajustesTaller`.
 
-Tablas según §7 del diseño. `equipo` lleva **clave interna propia** (`id uuid default gen_random_uuid()`) y `imei text` **nullable** con **índice único parcial** (`create unique index … on equipo (imei) where imei is not null`) — un `UNIQUE` normal también permitiría múltiples `NULL` en Postgres, pero el índice parcial declara la intención y es lo que la prueba fija. `ficha.estado` es un enum Postgres con `en_taller`, `entregado`, `entregado_sin_reparar`. `ajustes_taller` tiene una sola fila, forzada por `check (id = 1)`.
+Tablas según §7 del diseño. `equipo` lleva **clave interna propia** (`id uuid default gen_random_uuid()`) y `imei text` **nullable** con **índice único parcial** (`create unique index … on equipo (imei) where imei is not null`) — un `UNIQUE` normal también permitiría múltiples `NULL` en Postgres, pero el índice parcial declara la intención y es lo que la prueba fija. `ficha.estado` es un enum Postgres con `en_taller`, `entregado`, `entregado_sin_reparar`. `ajustes_taller` tiene una sola fila, forzada por `check (id = 1)`, y **la migración la siembra** con `nombre = 'AFIX'` y el resto en `null`. La Tarea 6 declara que `leerAjustes` nunca devuelve vacío, y eso solo es cierto si la fila existe desde el principio.
 
 - [ ] **Step 1: Inicializar el repositorio y las herramientas**
 
@@ -179,7 +181,7 @@ git commit -m "feat: esquema inicial y Postgres local"
 
 **Interfaces:**
 - Consumes: `obtenerDb`, tablas de la Tarea 1.
-- Produces: `type LineaCatalogo = { clave: string; etiqueta: string; bloque: 'funcionamiento' | 'condicion'; orden: number; estados: string[] }`; `type Checklist = Record<string, { estado: string; nota?: string }>`; `catalogoActivo(): Promise<{ version: number; lineas: LineaCatalogo[] }>`; `catalogoPorVersion(v: number): Promise<{ version: number; lineas: LineaCatalogo[] }>`; `validarChecklist(c: Checklist, lineas: LineaCatalogo[]): string[]` (devuelve claves inválidas, vacío si está bien).
+- Produces: `type LineaCatalogo = { clave: string; etiqueta: string; bloque: 'funcionamiento' | 'condicion'; orden: number; estados: string[] }`; `type Checklist = Record<string, { estado: string; nota?: string }>`; `catalogoActivo(): Promise<{ version: number; lineas: LineaCatalogo[] }>`; `catalogoPorVersion(v: number): Promise<{ version: number; lineas: LineaCatalogo[] }>`; `validarChecklist(c: Checklist, lineas: LineaCatalogo[]): string[]` (devuelve claves inválidas, vacío si está bien); `todosLosCatalogos(): Promise<{ version: number; lineas: LineaCatalogo[] }[]>` — lo necesita la Tarea 14, porque un respaldo sin todas las versiones del catálogo no permite volver a leer una ficha vieja.
 
 La semilla es la versión 1, con las 17 líneas de §9.4 del diseño: 13 de **funcionamiento** con estados `Bien` / `Falla` / `No probado` — pantalla y táctil, True Tone, Face ID, cámara trasera, cámara frontal, parlante, auricular, micrófonos, carga, botones, vibrador, Wi-Fi y señal, sensor de proximidad — y 4 de **condición** con sus propios estados: apertura previa (`Sin señales` / `Con señales`), indicador de humedad (`Sin indicio` / `Activado`), vidrio trasero (`Sano` / `Rayado` / `Trizado`), chasis (`Sano` / `Golpes` / `Doblado`).
 
@@ -375,6 +377,12 @@ test('cerrar escribe congelada_en', async () => {
   expect(f.congeladaEn).toBeTruthy()
 })
 
+test('actualizarFicha rechaza una ficha ya congelada', async () => {
+  const f = await crearFicha(ingresoMinimo())
+  await cerrarFicha(f.numero, 'entregado')
+  await expect(actualizarFicha(f.numero, { observacionIngreso: 'otra' })).rejects.toThrow(/congelada/i)
+})
+
 test('se puede entregar sin reparar', async () => {
   const f = await cerrarFicha((await crearFicha(ingresoMinimo())).numero, 'entregado_sin_reparar')
   expect(f.estado).toBe('entregado_sin_reparar')
@@ -422,7 +430,7 @@ git add -A && git commit -m "feat: estados de ficha, correlativo y congelado"
 
 **Interfaces:**
 - Consumes: Tarea 1.
-- Produces: `type Resolucion = { modeloComercial: string; requiereConfirmacion: boolean }`; `resolverModelo(productType: string | null, tabla: Map<string, string>): Resolucion`.
+- Produces: `type Resolucion = { modeloComercial: string; requiereConfirmacion: boolean }`; `resolverModelo(productType: string | null, tabla: Map<string, string>): Resolucion`; `cargarTablaModelos(): Promise<Map<string, string>>` en `src/datos/modelos.ts` — `resolverModelo` es pura a propósito, pero alguien tiene que leer la tabla sembrada, y es esto.
 
 La semilla cubre de iPhone 8 en adelante, que es el rango que el dueño atiende. Requisito de §8.2: un `ProductType` desconocido **no falla** — devuelve el código crudo con `requiereConfirmacion: true`, y la interfaz deja escribir el nombre a mano.
 
