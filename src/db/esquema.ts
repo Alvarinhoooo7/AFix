@@ -88,3 +88,12 @@ export const catalogoChecklist = pgTable(
   },
   (t) => [primaryKey({ columns: [t.version, t.clave] })],
 )
+
+export const notaPosterior = pgTable('nota_posterior', {
+  id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+  fichaNumero: integer('ficha_numero')
+    .notNull()
+    .references(() => ficha.numero),
+  texto: text('texto').notNull(),
+  creadaEn: timestamp('creada_en', { withTimezone: true }).notNull().defaultNow(),
+})
