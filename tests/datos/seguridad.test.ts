@@ -7,7 +7,7 @@ const sql = postgres(process.env.DATABASE_URL!, { max: 1 })
 afterAll(() => sql.end())
 
 for (const rol of ['anon', 'authenticated']) {
-  for (const tabla of ['equipo', 'ficha', 'ajustes_taller']) {
+  for (const tabla of ['equipo', 'ficha', 'ajustes_taller', 'catalogo_checklist']) {
     test(`el rol ${rol} no puede leer ${tabla}`, async () => {
       await expect(
         sql.begin(async (tx) => {

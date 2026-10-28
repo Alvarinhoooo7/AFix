@@ -8,6 +8,7 @@ import {
   jsonb,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -72,4 +73,17 @@ export const ajustesTaller = pgTable(
     rutaLogo: text('ruta_logo'),
   },
   (t) => [check('ajustes_taller_id_check', sql`${t.id} = 1`)],
+)
+
+export const catalogoChecklist = pgTable(
+  'catalogo_checklist',
+  {
+    version: integer('version').notNull(),
+    clave: text('clave').notNull(),
+    etiqueta: text('etiqueta').notNull(),
+    bloque: text('bloque').notNull(),
+    orden: integer('orden').notNull(),
+    estados: jsonb('estados').notNull().$type<string[]>(),
+  },
+  (t) => [primaryKey({ columns: [t.version, t.clave] })],
 )
