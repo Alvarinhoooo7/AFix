@@ -1,0 +1,100 @@
+/* Hoja de estilos del voucher imprimible (diseño §9.6 y §10).
+   En pantalla conserva la estética de pauta de taller; en papel (@media print)
+   elimina fondos para no gastar tinta salvo el rojo del timbre, fuerza tamaño carta
+   y evita cortar los checklists entre páginas. */
+
+.voucher-encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  border-bottom: 2px solid var(--color-linea);
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.voucher-taller-datos {
+  font-size: 0.875rem;
+  color: var(--color-secundario);
+  margin: 0.2rem 0 0;
+}
+
+.voucher-tabla-comparativa {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--color-linea);
+  font-size: 0.875rem;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.voucher-tabla-comparativa th,
+.voucher-tabla-comparativa td {
+  border-bottom: 1px solid var(--color-linea);
+  border-right: 1px solid var(--color-linea);
+  padding: 0.35rem 0.55rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.voucher-tabla-comparativa th {
+  font-family: var(--fuente-estrecha);
+  font-weight: 600;
+  background: var(--color-campo);
+}
+
+.voucher-estado-alerta {
+  color: var(--color-timbre);
+  font-weight: 700;
+}
+
+.voucher-estado-bien {
+  color: var(--color-tinta);
+  font-weight: 600;
+}
+
+.voucher-nota-linea {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--color-secundario);
+  margin-top: 0.15rem;
+}
+
+.voucher-bloque-imprimible {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+@media print {
+  @page {
+    size: letter;
+    margin: 10mm 12mm;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: var(--color-linea) !important;
+    font-size: 11pt;
+  }
+
+  .hoja {
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+
+  .no-imprimir {
+    display: none !important;
+  }
+
+  .campo-valor,
+  .voucher-tabla-comparativa th {
+    background: transparent !important;
+  }
+
+  .timbre {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

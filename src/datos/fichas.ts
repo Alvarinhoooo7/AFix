@@ -1,9 +1,11 @@
 import { and, asc, desc, eq, isNull, ne, sql } from 'drizzle-orm'
-import { catalogoActivo } from '@/datos/catalogo'
-import type { Ficha } from '@/datos/equipos'
+import { leerAjustes, type AjustesTaller } from '@/datos/ajustes'
+import { catalogoActivo, catalogoPorVersion } from '@/datos/catalogo'
+import { obtenerEquipo, type Ficha } from '@/datos/equipos'
 import { obtenerDb, type DrizzleDb } from '@/db/cliente'
 import { equipo, ficha, notaPosterior } from '@/db/esquema'
-import { limpiarChecklist } from '@/dominio/checklist'
+import { compararBateria, type ComparacionBateria, type LecturaBateria } from '@/dominio/bateria'
+import { limpiarChecklist, type Checklist, type LineaCatalogo } from '@/dominio/checklist'
 import { normalizarImei } from '@/dominio/equipo'
 import { transicionPermitida, type DatosIngreso, type EstadoFicha } from '@/dominio/ficha'
 
@@ -286,4 +288,77 @@ export async function buscar(texto: string): Promise<FilaInicio[]> {
     .orderBy(ordenPrioridad, desc(ficha.numero))
 
   return filas.map(mapearFilaInicio)
+}
+
+export type DatosVoucher = {
+  numero: number
+  estado: EstadoFicha
+  recibidoEn: Date
+  entregadoEn: Date | null
+  taller: AjustesTaller
+  equipo: {
+    modeloComercial: string | null
+    capacidad: string | null
+    imei: string | null
+    numeroSerie: string | null
+    iosVersion: string | null
+  }
+  lineas: LineaCatalogo[]
+  checklistIngreso: Checklist
+  checklistSalida: Checklist
+  bateria: ComparacionBateria & {
+    ingreso: LecturaBateria
+    salida: LecturaBateria
+  }
+  trabajosRealizados: string[]
+  observacionIngreso: string
+  observacionSalida: string
+}
+
+/**
+ * Reúne exactamente lo que se imprime en el voucher (diseño §9.6).
+ * Excluye a propósito pidioCliente, notaReparacion y texto de garantía.
+ */
+export async function datosVoucher(numero: number): Promise<DatosVoucher> {
+  const f = await obtenerFicha(numero)
+  if (!f) throw errorInexistente(numero)
+
+  const [eqActual, taller, catalogo] = await Promise.all([
+    obtenerEquipo(f.equipoId),
+    leerAjustes(),
+    catalogoPorVersion(f.catalogoVersion ?? 1),
+  ])
+
+  const ingresoBat: LecturaBateria = { pct: f.bateriaPct, ciclos: f.bateriaCiclos }
+  const salidaBat: LecturaBateria =
+    f.estado === 'entregado_sin_reparar'
+      ? { pct: null, ciclos: null }
+      : { pct: f.bateriaSalidaPct, ciclos: f.bateriaSalidaCiclos }
+  const comparacion = compararBateria(ingresoBat, salidaBat)
+
+  return {
+    numero: f.numero,
+    estado: f.estado,
+    recibidoEn: f.recibidoEn,
+    entregadoEn: f.entregadoEn,
+    taller,
+    equipo: {
+      modeloComercial: eqActual?.modeloComercial ?? null,
+      capacidad: eqActual?.capacidad ?? null,
+      imei: eqActual?.imei ?? null,
+      numeroSerie: eqActual?.numeroSerie ?? null,
+      iosVersion: f.iosVersion,
+    },
+    lineas: catalogo.lineas,
+    checklistIngreso: f.checklistIngreso,
+    checklistSalida: f.checklistSalida,
+    bateria: {
+      ...comparacion,
+      ingreso: ingresoBat,
+      salida: salidaBat,
+    },
+    trabajosRealizados: Array.isArray(f.trabajosRealizados) ? f.trabajosRealizados : [],
+    observacionIngreso: f.observacionIngreso,
+    observacionSalida: f.observacionSalida,
+  }
 }
