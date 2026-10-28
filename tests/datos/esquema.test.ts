@@ -28,3 +28,11 @@ test('dos equipos no pueden compartir el mismo IMEI', async () => {
 test('ajustes_taller admite una sola fila', async () => {
   await expect(obtenerDb().insert(ajustesTaller).values({ id: 2, nombre: 'Otro' })).rejects.toThrow()
 })
+
+test('ajustes_taller arranca sembrada con AFIX', async () => {
+  const filas = await obtenerDb().select().from(ajustesTaller)
+  expect(filas).toHaveLength(1)
+  expect(filas[0].id).toBe(1)
+  expect(filas[0].nombre).toBe('AFIX')
+  expect(filas[0].telefono).toBeNull()
+})
