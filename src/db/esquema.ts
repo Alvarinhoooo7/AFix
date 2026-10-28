@@ -97,3 +97,8 @@ export const notaPosterior = pgTable('nota_posterior', {
   texto: text('texto').notNull(),
   creadaEn: timestamp('creada_en', { withTimezone: true }).notNull().defaultNow(),
 })
+
+export const modeloIphone = pgTable('modelo_iphone', {
+  productType: text('product_type').primaryKey(),
+  modeloComercial: text('modelo_comercial').notNull(),
+})
