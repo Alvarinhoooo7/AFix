@@ -1,0 +1,228 @@
+/* Sistema visual "Pauta de taller" (diseño §10): la orden de trabajo en papel que el
+   dueño ya llena a mano. Campos preimpresos sobre línea, casillas, timbre de goma.
+   Es la única hoja de estilos de pantalla, así que las clases son globales a propósito:
+   la hoja de impresión del voucher necesita poder apuntarle a las mismas.
+
+   Reglas del sistema, para las pantallas que vienen después:
+   - Un solo color de señal, --color-timbre, para falla y alerta. Nada más grita.
+   - Etiquetas en caja de oración: nunca MAYÚSCULAS, nunca puntos medios, botones sin flecha.
+   - --color-secundario solo sobre --color-fondo (4,71:1). Sobre --color-campo da 4,30:1
+     y no alcanza el mínimo de texto normal: ahí va --color-linea o --color-tinta. */
+
+:root {
+  /* Los seis colores de la dirección visual. No hay otros. */
+  --color-fondo: #e8ede9; /* papel de talonario */
+  --color-campo: #dce4de; /* fondo de campo */
+  --color-linea: #1f2a24; /* línea y texto base */
+  --color-tinta: #16314a; /* tinta de valores, lápiz pasta */
+  --color-timbre: #a8322b; /* timbre, falla, alerta */
+  --color-secundario: #5e6b64; /* texto secundario */
+
+  /* Una sola familia en dos anchos. Las variables --fuente-archivo* las define layout.tsx. */
+  --fuente-base: var(--fuente-archivo), 'Helvetica Neue', Arial, sans-serif;
+  --fuente-estrecha: var(--fuente-archivo-estrecha), 'Arial Narrow', Arial, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--color-fondo);
+  color: var(--color-linea);
+  font-family: var(--fuente-base);
+  font-size: 1rem;
+  line-height: 1.45;
+  -webkit-text-size-adjust: 100%;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-tinta);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* La hoja: el papel de la orden de trabajo, centrado y angosto como una carta. */
+.hoja {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 4rem;
+}
+
+.encabezado {
+  border-bottom: 2px solid var(--color-linea);
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.titulo {
+  font-family: var(--fuente-estrecha);
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  margin: 0;
+}
+
+/* La segunda línea de la pauta, finita, apenas debajo de la gruesa. */
+.doble-linea {
+  border-top: 1px solid var(--color-linea);
+  margin-bottom: 1.75rem;
+}
+
+.nota {
+  font-family: var(--fuente-base);
+  font-size: 0.875rem;
+  color: var(--color-secundario);
+  margin: 0.5rem 0 0;
+}
+
+/* El campo: etiqueta chica sobre línea inferior, como un formulario preimpreso.
+   Nunca caja con borde completo: ahí se pierde la dirección. */
+.campo {
+  display: block;
+}
+
+.campo-etiqueta {
+  display: block;
+  font-family: var(--fuente-estrecha);
+  font-size: 0.8125rem;
+  letter-spacing: 0.015em;
+  color: var(--color-secundario);
+  margin-bottom: 0.2rem;
+}
+
+.campo-valor {
+  display: block;
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.3rem 0.5rem;
+  background: var(--color-campo);
+  border: 0;
+  border-bottom: 1px solid var(--color-linea);
+  border-radius: 0;
+  font-family: var(--fuente-base);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-tinta);
+}
+
+.campo-entrada {
+  appearance: none;
+}
+
+.campo-entrada:focus-visible {
+  outline: 2px solid var(--color-tinta);
+  outline-offset: 1px;
+}
+
+/* El timbre de goma: el número de ficha. El único elemento que grita en la hoja. */
+.timbre {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0.3rem 0.7rem 0.35rem;
+  border: 2.5px solid var(--color-timbre);
+  border-radius: 2px;
+  color: var(--color-timbre);
+  font-family: var(--fuente-estrecha);
+  transform: rotate(-3.5deg);
+}
+
+.timbre-rotulo {
+  font-size: 0.875rem;
+  letter-spacing: 0.02em;
+}
+
+.timbre-numero {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* La marca del taller: el logo si el archivo existe, el nombre en texto mientras no. */
+.marca {
+  display: flex;
+  align-items: center;
+  min-height: 3rem;
+  margin: 1.5rem 0 2.25rem;
+}
+
+.marca-logo {
+  max-height: 4.5rem;
+  max-width: 100%;
+  width: auto;
+}
+
+.marca-nombre {
+  font-family: var(--fuente-estrecha);
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+
+.formulario {
+  display: grid;
+  gap: 1.5rem;
+}
+
+/* Dos columnas apenas hay ancho, como los campos cortos de la orden en papel. */
+@media (min-width: 36rem) {
+  .formulario {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ancho-total {
+    grid-column: 1 / -1;
+  }
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.boton {
+  font-family: var(--fuente-estrecha);
+  font-size: 1rem;
+  letter-spacing: 0.015em;
+  color: var(--color-fondo);
+  background: var(--color-linea);
+  border: 1px solid var(--color-linea);
+  border-radius: 2px;
+  padding: 0.55rem 1.4rem;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.boton:hover {
+  background: var(--color-tinta);
+  border-color: var(--color-tinta);
+}
+
+.aviso {
+  font-family: var(--fuente-base);
+  font-size: 0.9375rem;
+  color: var(--color-linea);
+  margin: 0 0 1.25rem;
+}
+
+.aviso-falla {
+  color: var(--color-timbre);
+  font-weight: 600;
+}
