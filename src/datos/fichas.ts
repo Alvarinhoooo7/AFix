@@ -1,14 +1,25 @@
-import { and, asc, eq, isNull } from 'drizzle-orm'
+import { and, asc, desc, eq, isNull, ne, sql } from 'drizzle-orm'
 import { catalogoActivo } from '@/datos/catalogo'
 import type { Ficha } from '@/datos/equipos'
 import { obtenerDb, type DrizzleDb } from '@/db/cliente'
 import { equipo, ficha, notaPosterior } from '@/db/esquema'
 import { limpiarChecklist } from '@/dominio/checklist'
 import { normalizarImei } from '@/dominio/equipo'
-import { transicionPermitida, type DatosIngreso } from '@/dominio/ficha'
+import { transicionPermitida, type DatosIngreso, type EstadoFicha } from '@/dominio/ficha'
 
 export type NotaPosterior = typeof notaPosterior.$inferSelect
 export type FichaConNotas = Ficha & { notasPosteriores: NotaPosterior[] }
+
+export type FilaInicio = {
+  numero: number
+  estado: EstadoFicha
+  modeloComercial: string
+  imei: string | null
+  quienLoTrajo: string | null
+  recibidoEn: Date
+  entregadoEn: Date | null
+  trabajos: string[]
+}
 
 /** Datos de ingreso; sin catalogoVersion se usa la versión del catálogo en vigor. */
 export type EntradaIngreso = Omit<DatosIngreso, 'catalogoVersion'> & { catalogoVersion?: number }
@@ -163,4 +174,116 @@ export async function agregarNotaPosterior(numero: number, texto: string): Promi
     )
   }
   await obtenerDb().insert(notaPosterior).values({ fichaNumero: numero, texto: limpio })
+}
+
+type FilaCrudaInicio = {
+  numero: number
+  estado: EstadoFicha
+  modeloComercial: string | null
+  imei: string | null
+  quienLoTrajo: string | null
+  recibidoEn: Date
+  entregadoEn: Date | null
+  trabajosRealizados: string[]
+}
+
+function mapearFilaInicio(f: FilaCrudaInicio): FilaInicio {
+  return {
+    numero: f.numero,
+    estado: f.estado,
+    modeloComercial: f.modeloComercial ?? 'Sin modelo',
+    imei: f.imei,
+    quienLoTrajo: f.quienLoTrajo,
+    recibidoEn: f.recibidoEn,
+    entregadoEn: f.entregadoEn,
+    trabajos: Array.isArray(f.trabajosRealizados) ? f.trabajosRealizados : [],
+  }
+}
+
+export async function equiposEnTaller(): Promise<FilaInicio[]> {
+  const filas = await obtenerDb()
+    .select({
+      numero: ficha.numero,
+      estado: ficha.estado,
+      modeloComercial: equipo.modeloComercial,
+      imei: equipo.imei,
+      quienLoTrajo: ficha.quienLoTrajo,
+      recibidoEn: ficha.recibidoEn,
+      entregadoEn: ficha.entregadoEn,
+      trabajosRealizados: ficha.trabajosRealizados,
+    })
+    .from(ficha)
+    .innerJoin(equipo, eq(ficha.equipoId, equipo.id))
+    .where(eq(ficha.estado, 'en_taller'))
+    .orderBy(desc(ficha.recibidoEn), desc(ficha.numero))
+  return filas.map(mapearFilaInicio)
+}
+
+export async function ultimasEntregadas(limite: number): Promise<FilaInicio[]> {
+  if (limite <= 0) return []
+  const filas = await obtenerDb()
+    .select({
+      numero: ficha.numero,
+      estado: ficha.estado,
+      modeloComercial: equipo.modeloComercial,
+      imei: equipo.imei,
+      quienLoTrajo: ficha.quienLoTrajo,
+      recibidoEn: ficha.recibidoEn,
+      entregadoEn: ficha.entregadoEn,
+      trabajosRealizados: ficha.trabajosRealizados,
+    })
+    .from(ficha)
+    .innerJoin(equipo, eq(ficha.equipoId, equipo.id))
+    .where(ne(ficha.estado, 'en_taller'))
+    .orderBy(desc(ficha.entregadoEn), desc(ficha.numero))
+    .limit(limite)
+  return filas.map(mapearFilaInicio)
+}
+
+function sinAcentosMinusculas(texto: string): string {
+  return texto
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+}
+
+export async function buscar(texto: string): Promise<FilaInicio[]> {
+  const limpio = texto.trim()
+  if (!limpio) return []
+
+  const terminoNormalizado = sinAcentosMinusculas(limpio)
+  const patron = `%${terminoNormalizado}%`
+  const soloDigitos = limpio.replace(/^#/, '').trim()
+  const numeroBuscado = /^\d{1,9}$/.test(soloDigitos) ? Number.parseInt(soloDigitos, 10) : null
+  const imeiCandidato = normalizarImei(limpio)
+  const patronImei = `%${imeiCandidato ?? terminoNormalizado}%`
+
+  const condicion = sql`(
+    ${numeroBuscado !== null ? sql`${ficha.numero} = ${numeroBuscado} or` : sql``}
+    lower(coalesce(${equipo.imei}, '')) like ${patronImei}
+    or lower(coalesce(${equipo.numeroSerie}, '')) like ${patron}
+    or translate(lower(coalesce(${equipo.modeloComercial}, '')), 'áéíóúüñ', 'aeiouun') like ${patron}
+    or translate(lower(coalesce(${ficha.quienLoTrajo}, '')), 'áéíóúüñ', 'aeiouun') like ${patron}
+  )`
+
+  const ordenPrioridad =
+    numeroBuscado !== null ? sql`case when ${ficha.numero} = ${numeroBuscado} then 0 else 1 end` : sql`1`
+
+  const filas = await obtenerDb()
+    .select({
+      numero: ficha.numero,
+      estado: ficha.estado,
+      modeloComercial: equipo.modeloComercial,
+      imei: equipo.imei,
+      quienLoTrajo: ficha.quienLoTrajo,
+      recibidoEn: ficha.recibidoEn,
+      entregadoEn: ficha.entregadoEn,
+      trabajosRealizados: ficha.trabajosRealizados,
+    })
+    .from(ficha)
+    .innerJoin(equipo, eq(ficha.equipoId, equipo.id))
+    .where(condicion)
+    .orderBy(ordenPrioridad, desc(ficha.numero))
+
+  return filas.map(mapearFilaInicio)
 }

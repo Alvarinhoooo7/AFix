@@ -448,3 +448,49 @@ body {
 .casilla-trabajo input {
   accent-color: var(--color-tinta);
 }
+
+.lista-fichas {
+  border: 1px solid var(--color-linea);
+  background: var(--color-fondo);
+}
+
+.fila-inicio {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding: 0.7rem 0.9rem;
+  border-bottom: 1px solid var(--color-linea);
+  text-decoration: none;
+  color: var(--color-linea);
+}
+
+.fila-inicio:last-child {
+  border-bottom: 0;
+}
+
+.fila-inicio:hover {
+  background: var(--color-campo);
+}
+
+.fila-inicio-ficha {
+  font-family: var(--fuente-estrecha);
+  font-weight: 700;
+  color: var(--color-timbre);
+  min-width: 4.5rem;
+}
+
+.fila-inicio-cuerpo {
+  flex: 1 1 16rem;
+}
+
+.fila-inicio-modelo {
+  font-weight: 600;
+  color: var(--color-tinta);
+}
+
+.fila-inicio-meta {
+  font-size: 0.875rem;
+  color: var(--color-secundario);
+}
