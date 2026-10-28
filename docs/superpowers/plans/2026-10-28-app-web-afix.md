@@ -88,7 +88,7 @@ tests/
   datos/*.test.ts                    contra supabase start
 ```
 
-`tests/ayudas.ts` se crea en la Tarea 1 y crece con las tareas siguientes. `ingresoVacio()` devuelve un `DatosIngreso` con todo en `null` o vacío y `origenDatos: 'manual'` — es el equipo apagado, el caso que más importa que funcione. `baseCaida()` es una base que rechaza toda consulta, para la prueba de la línea 5 de Review Focus.
+`tests/ayudas.ts` se crea en la **Tarea 4**, que es donde se define `DatosIngreso`, y crece con las tareas siguientes. Las Tareas 1 a 3 no lo necesitan: insertan filas directamente con Drizzle, porque sus tablas existen desde la Tarea 1 y `crearFicha` todavía no. `ingresoVacio()` devuelve un `DatosIngreso` con todo en `null` o vacío y `origenDatos: 'manual'` — es el equipo apagado, el caso que más importa que funcione. `baseCaida()` es una base que rechaza toda consulta, para la prueba de la línea 5 de Review Focus.
 
 ---
 
