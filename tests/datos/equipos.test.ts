@@ -1,6 +1,6 @@
 import { eq, inArray } from 'drizzle-orm'
 import { afterAll, expect, test } from 'vitest'
-import { buscarPorImei, fichasDeEquipo, fusionarEquipos, obtenerEquipo } from '@/datos/equipos'
+import { buscarPorImei, buscarVinculablePorImei, fichasDeEquipo, fusionarEquipos, obtenerEquipo } from '@/datos/equipos'
 import { obtenerDb } from '@/db/cliente'
 import { equipo, ficha } from '@/db/esquema'
 
@@ -81,5 +81,35 @@ test('fusionar un equipo consigo mismo falla', async () => {
     expect(await db.select().from(equipo).where(eq(equipo.id, e.id))).toHaveLength(1)
   } finally {
     await limpiar([e.id])
+  }
+})
+
+test('buscarVinculablePorImei marca ficha abierta solo si hay una en_taller', async () => {
+  const [abierto] = await db.insert(equipo).values({ imei: '358721094473324' }).returning()
+  const [cerrado] = await db.insert(equipo).values({ imei: '358721094473325' }).returning()
+  try {
+    await db.insert(ficha).values([
+      { equipoId: abierto.id, estado: 'en_taller' },
+      { equipoId: cerrado.id, estado: 'entregado' },
+    ])
+    expect(await buscarVinculablePorImei('358721094473324')).toEqual({ id: abierto.id, tieneFichaAbierta: true })
+    expect(await buscarVinculablePorImei('358721094473325')).toEqual({ id: cerrado.id, tieneFichaAbierta: false })
+    expect(await buscarVinculablePorImei('358721094473399')).toBeNull()
+    expect(await buscarVinculablePorImei('')).toBeNull()
+  } finally {
+    await limpiar([abierto.id, cerrado.id])
+  }
+})
+
+test('fusionar dos equipos con IMEI distintos falla y no pierde nada', async () => {
+  const [a] = await db.insert(equipo).values({ imei: '358721094473326' }).returning()
+  const [b] = await db.insert(equipo).values({ imei: '358721094473327' }).returning()
+  try {
+    await db.insert(ficha).values({ equipoId: a.id })
+    await expect(fusionarEquipos(a.id, b.id)).rejects.toThrow(/IMEI distintos/)
+    expect(await obtenerEquipo(a.id)).not.toBeNull()
+    expect(await fichasDeEquipo(a.id)).toHaveLength(1)
+  } finally {
+    await limpiar([a.id, b.id])
   }
 })
