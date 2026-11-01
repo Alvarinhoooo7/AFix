@@ -506,3 +506,34 @@ paralelo.
    repararlos, para la sonda: son los únicos que van a traer pánicos reales con los que
    validar el traductor.
 3. Cargar los datos del taller en Ajustes una vez que esté lista la pantalla (fase 4–6).
+
+## 11. Estado de la implementación (1 de noviembre de 2026)
+
+Las fases 0 a 8 están implementadas en la rama `rediseno-iphone`. Pruebas: 151 de la app
+(vitest) y 56 del agente (pytest). Hay una prueba de punta a punta en local (ingreso a mano →
+reparación → entrega, con los dos PDF reales generados por Edge, archivados y verificados
+contra su huella, y el respaldo zip con ambos).
+
+**Desviaciones respecto del plan:**
+
+- **Color:** iOS 27 no entrega `DeviceEnclosureColor` y `DeviceColor` es solo un número, así
+  que no hay una tabla fiable de colores. El color queda como dato declarado, y la lectura
+  guarda los códigos crudos por si más adelante se arma la tabla.
+- **`modelo_iphone` conserva su nombre** (no se renombró a `modelo_apple`). Se agregaron
+  iPads con identificadores seguros; los iPhone 17 quedan fuera hasta confirmar sus códigos.
+- **Vigilancia:** en vez de `crash watch` (que depende del syslog y se corta cuando el
+  equipo se reinicia), el agente revisa la lista de registros cada 5 segundos y compara.
+  Así detecta también los reinicios forzados y los pánicos que aparecen después de que el
+  iPhone vuelve.
+- **Modo recuperación:** se detecta con `IRecv`, pero en Windows depende del driver de
+  Apple y no está probado con un equipo real.
+
+**Pendiente con equipos reales:**
+
+1. Fixture anonimizado del iPhone de pruebas
+   (`python -m afix_usb.sonda agente/pruebas/fixtures/iphone14plus-ios27.json --anonimo`):
+   el iPhone se desconectó antes de capturarlo.
+2. Un `panic-full` real (iPhone de garantía) para validar `reglas_panicos.json`.
+3. Lectura sin «Confiar» (qué entrega lockdown) y la NVRAM de Buscar mi iPhone en ese nivel.
+4. Aplicar las migraciones 0009 y 0010 a Supabase en la nube, y cargar `SUPABASE_URL` y
+   `SUPABASE_SERVICE_ROLE_KEY` en `.env.local`.

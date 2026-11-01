@@ -1186,3 +1186,27 @@ body {
     display: none !important;
   }
 }
+
+/* Una línea chica bajo una etiqueta: la referencia del ingreso en el checklist de salida. */
+.nota-linea {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: var(--color-secundario);
+}
+
+/* Las tres etapas del taller lado a lado cuando hay ancho. */
+.columnas-taller {
+  display: grid;
+  gap: 0 1.5rem;
+}
+
+@media (min-width: 60rem) {
+  .columnas-taller {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .columnas-taller .fila-inicio-cuerpo {
+    flex-basis: 100%;
+  }
+}

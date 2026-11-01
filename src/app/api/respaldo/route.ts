@@ -1,16 +1,13 @@
-import { armarRespaldo } from '@/dominio/respaldo'
+import { armarZipRespaldo } from '@/dominio/respaldo'
 
 export async function GET() {
   try {
-    const respaldo = await armarRespaldo()
-    const fecha = respaldo.generadoEn.slice(0, 10)
-    const cuerpo = JSON.stringify(respaldo, null, 2)
-
-    return new Response(cuerpo, {
+    const { zip, fecha } = await armarZipRespaldo()
+    return new Response(Buffer.from(zip), {
       status: 200,
       headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Content-Disposition': `attachment; filename="respaldo-afix-${fecha}.json"`,
+        'Content-Type': 'application/zip',
+        'Content-Disposition': `attachment; filename="respaldo-afix-${fecha}.zip"`,
       },
     })
   } catch {

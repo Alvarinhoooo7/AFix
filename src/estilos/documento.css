@@ -1,0 +1,220 @@
+/* Documentos emitidos: comprobante de ingreso e informe de entrega (plan §6). Se ven en
+   /imprimir y Edge los imprime a PDF tamaño carta: lo que se ve es lo que sale.
+   Papel blanco, tinta negra, el rojo solo para fallas y el verde para lo verificado. */
+
+.documento {
+  max-width: 50rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 3rem;
+  background: var(--color-blanco);
+  color: var(--color-linea);
+  font-size: 0.9375rem;
+}
+
+.documento-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  border-bottom: 2.5px solid var(--color-linea);
+  padding-bottom: 0.75rem;
+}
+
+.documento-marca {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.documento-marca svg {
+  width: 3.25rem;
+  height: 3.25rem;
+  color: var(--color-blanco);
+  background: var(--color-linea);
+  padding: 0.25rem;
+}
+
+.documento-taller {
+  font-family: var(--fuente-estrecha);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  margin: 0;
+  line-height: 1.1;
+}
+
+.documento-taller-datos {
+  font-size: 0.8125rem;
+  color: var(--color-secundario);
+  margin: 0.15rem 0 0;
+}
+
+.documento-titulo {
+  font-family: var(--fuente-estrecha);
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0.9rem 0 0.1rem;
+}
+
+.documento-fecha {
+  font-size: 0.875rem;
+  color: var(--color-secundario);
+  margin: 0 0 0.75rem;
+  border-bottom: 1px solid var(--color-linea);
+  padding-bottom: 0.5rem;
+}
+
+.documento-seccion {
+  margin-top: 1.1rem;
+  break-inside: avoid;
+}
+
+.documento-seccion-larga {
+  margin-top: 1.1rem;
+}
+
+.documento-seccion h2 ,
+.documento-seccion-larga h2 {
+  font-family: var(--fuente-estrecha);
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+  padding-bottom: 0.2rem;
+  border-bottom: 1.5px solid var(--color-linea);
+}
+
+/* Campos de la pauta sobre línea, en tres columnas compactas. */
+.documento-campos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem 1.1rem;
+}
+
+.documento-campos .ancho-total {
+  grid-column: 1 / -1;
+}
+
+.documento-campo-etiqueta {
+  display: block;
+  font-family: var(--fuente-estrecha);
+  font-size: 0.7rem;
+  color: var(--color-secundario);
+}
+
+.documento-campo-valor {
+  display: block;
+  min-height: 1.35rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-linea) 45%, transparent);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.documento-origen {
+  font-family: var(--fuente-estrecha);
+  font-size: 0.68rem;
+  font-weight: 400;
+  color: var(--color-secundario);
+  margin-left: 0.3rem;
+}
+
+.documento-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.documento-tabla th,
+.documento-tabla td {
+  border-bottom: 1px solid color-mix(in srgb, var(--color-linea) 30%, transparent);
+  padding: 0.25rem 0.4rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.documento-tabla th {
+  font-family: var(--fuente-estrecha);
+  border-bottom: 1.5px solid var(--color-linea);
+}
+
+.documento-tabla tr {
+  break-inside: avoid;
+}
+
+.documento-columnas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.1rem;
+}
+
+.estado-alerta {
+  color: var(--color-alerta);
+  font-weight: 700;
+}
+
+.estado-bien {
+  font-weight: 600;
+}
+
+.estado-sin-dato {
+  color: var(--color-secundario);
+}
+
+.documento-nota-linea {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-secundario);
+}
+
+.documento-clausulas {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.documento-clausulas li {
+  margin-bottom: 0.3rem;
+}
+
+.documento-firmas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2.5rem;
+  margin-top: 2.75rem;
+  break-inside: avoid;
+}
+
+.documento-firma {
+  border-top: 1px solid var(--color-linea);
+  padding-top: 0.3rem;
+  font-size: 0.8125rem;
+  text-align: center;
+}
+
+.documento-pie {
+  margin-top: 1.5rem;
+  font-size: 0.72rem;
+  color: var(--color-secundario);
+}
+
+.documento .timbre {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+@media print {
+  @page {
+    size: letter;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+  }
+
+  .documento {
+    max-width: none;
+    padding: 0;
+    font-size: 10pt;
+  }
+}

@@ -151,7 +151,7 @@ async def flujo_vigilancia(udid: str, intervalo: float = INTERVALO_VIGILANCIA, r
     try:
         base_lista, _ = await dispositivo.rutas_crash(udid)
     except ErrorEquipo as error:
-        yield _sse("error", {"mensaje": str(error)})
+        yield _sse("problema", {"mensaje": str(error)})
         return
     base = set(base_lista)
     fallas = 0

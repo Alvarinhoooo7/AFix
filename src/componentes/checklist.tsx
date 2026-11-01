@@ -1,22 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { limpiarChecklist, type Checklist as ValorChecklist, type LineaCatalogo } from '@/dominio/checklist'
-
-const ESTADOS_ALERTA = new Set([
-  'Falla',
-  'Con señales',
-  'Activado',
-  'Rayado',
-  'Trizado',
-  'Golpes',
-  'Doblado',
-])
+import { limpiarChecklist, tonoEstado, type Checklist as ValorChecklist, type LineaCatalogo } from '@/dominio/checklist'
 
 function claseCasilla(estado: string, activo: boolean): string {
   if (!activo) return 'casilla'
-  if (ESTADOS_ALERTA.has(estado)) return 'casilla casilla-alerta'
-  if (estado === 'No probado') return 'casilla casilla-neutra'
+  const tono = tonoEstado(estado)
+  if (tono === 'alerta') return 'casilla casilla-alerta'
+  if (tono === 'sin_dato') return 'casilla casilla-neutra'
   return 'casilla casilla-activa'
 }
 
@@ -26,6 +17,8 @@ type PropsChecklist = {
   onChange?: (nuevo: ValorChecklist) => void
   nombreCampo?: string
   deshabilitado?: boolean
+  /** En la salida: lo que se marcó al ingreso, a la vista al lado de cada línea (no se copia). */
+  referencia?: ValorChecklist
 }
 
 export function Checklist({
@@ -34,6 +27,7 @@ export function Checklist({
   onChange,
   nombreCampo = 'checklist',
   deshabilitado = false,
+  referencia,
 }: PropsChecklist) {
   const [notasAbiertas, setNotasAbiertas] = useState<Record<string, boolean>>({})
 
@@ -77,7 +71,14 @@ export function Checklist({
             return (
               <div key={linea.clave} className="checklist-fila">
                 <div className="checklist-fila-principal">
-                  <span className="checklist-etiqueta">{linea.etiqueta}</span>
+                  <span className="checklist-etiqueta">
+                    {linea.etiqueta}
+                    {referencia ? (
+                      <span className={tonoEstado(referencia[linea.clave]?.estado) === 'alerta' ? 'nota-linea texto-alerta' : 'nota-linea'}>
+                        Al ingreso: {referencia[linea.clave]?.estado ?? 'No probado'}
+                      </span>
+                    ) : null}
+                  </span>
                   <button
                     type="button"
                     className={tieneNotaEscrita ? 'boton-nota boton-nota-activa' : 'boton-nota'}
@@ -134,7 +135,7 @@ export function Checklist({
     <div className="checklist">
       <input type="hidden" name={nombreCampo} value={JSON.stringify(limpiarChecklist(valor))} />
       {renderizarBloque('Funcionamiento', funcionamiento)}
-      {renderizarBloque('Condición y antecedentes', condicion)}
+      {renderizarBloque('Estado físico', condicion)}
     </div>
   )
 }

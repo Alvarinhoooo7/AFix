@@ -1,9 +1,11 @@
 import Link from 'next/link'
+import type { EstadoFicha } from '@/dominio/ficha'
 
 export type ItemHistorialEquipo = {
   numero: number
   trabajos: string[]
   entregadoEn: Date | string
+  estado?: EstadoFicha
 }
 
 function formatearFecha(fecha: Date | string): string {
