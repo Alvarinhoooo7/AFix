@@ -1,0 +1,22 @@
+[project]
+name = "afix-usb"
+version = "1.0.0"
+description = "Agente USB de AFix: lee iPhone e iPad por usbmux para la app del taller"
+requires-python = ">=3.12"
+dependencies = [
+  "pymobiledevice3==11.49.1",
+  "fastapi==0.162.0",
+  "uvicorn==0.54.0",
+]
+
+[project.optional-dependencies]
+pruebas = ["pytest==9.2.0", "httpx==0.28.1"]
+
+[tool.setuptools]
+packages = ["afix_usb"]
+
+[tool.setuptools.package-data]
+afix_usb = ["reglas_panicos.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["pruebas"]

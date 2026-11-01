@@ -6,3 +6,8 @@ node_modules/
 *.tsbuildinfo
 next-env.d.ts
 .playwright-mcp/
+
+# Agente USB (Python)
+__pycache__/
+.pytest_cache/
+*.egg-info/

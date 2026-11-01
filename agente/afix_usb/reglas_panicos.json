@@ -1,0 +1,65 @@
+{
+  "_comentario": "Traductor de panicos (plan §3.7). Cada regla busca 'patron' (expresion regular, sin distinguir mayusculas) en el panicString. Gana la primera que calce, en orden. 'linea' es la clave del checklist que se sugiere revisar, o null. Las reglas estan POR VALIDAR con panicos reales: al confirmar o corregir una, anotar el equipo en 'validada'.",
+  "reglas": [
+    {
+      "patron": "missing sensor\\(s\\):.*\\b(mic1|mic2)\\b",
+      "causa": "Falta un micrófono: flex del puerto de carga o del micrófono",
+      "linea": "carga",
+      "validada": null
+    },
+    {
+      "patron": "missing sensor\\(s\\):.*\\bprs0\\b",
+      "causa": "Falta el barómetro: según el modelo, va en el flex del puerto de carga",
+      "linea": "carga",
+      "validada": null
+    },
+    {
+      "patron": "missing sensor\\(s\\):.*\\b(tg0b|tg0v)\\b",
+      "causa": "Falta el sensor de temperatura de la batería: batería o su conector (común en baterías genéricas)",
+      "linea": "carga",
+      "validada": null
+    },
+    {
+      "patron": "missing sensor\\(s\\):.*\\b(prox|als)\\b",
+      "causa": "Falta el sensor de proximidad o de luz: flex de la cámara frontal y el auricular",
+      "linea": "sensor_proximidad",
+      "validada": null
+    },
+    {
+      "patron": "missing sensor\\(s\\)",
+      "causa": "Falta un sensor del equipo: revisar flex y conectores del sensor nombrado en el texto",
+      "linea": null,
+      "validada": null
+    },
+    {
+      "patron": "thermalmonitord",
+      "causa": "Sensor térmico sin respuesta",
+      "linea": null,
+      "validada": null
+    },
+    {
+      "patron": "\\b(ans2|nand)\\b",
+      "causa": "Almacenamiento (NAND) de la placa",
+      "linea": null,
+      "validada": null
+    },
+    {
+      "patron": "\\bsep\\b|sep panic",
+      "causa": "Procesador de seguridad (SEP): placa o componente asociado, como Face ID",
+      "linea": "face_id",
+      "validada": null
+    },
+    {
+      "patron": "\\baop\\b|aop panic",
+      "causa": "Coprocesador de sensores (AOP): placa o un sensor asociado",
+      "linea": null,
+      "validada": null
+    },
+    {
+      "patron": "watchdog timeout|no checkins from watchdogd|userspace watchdog",
+      "causa": "Un periférico o proceso del sistema dejó de responder: cruzar con los demás pánicos del equipo",
+      "linea": null,
+      "validada": null
+    }
+  ]
+}
