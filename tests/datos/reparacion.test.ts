@@ -27,7 +27,7 @@ async function nueva() {
   return f
 }
 
-test('TRABAJOS contiene los diez trabajos estándar del taller', () => {
+test('TRABAJOS contiene los trabajos estándar del taller', () => {
   expect(TRABAJOS).toEqual([
     'Batería',
     'Pantalla',
@@ -39,6 +39,7 @@ test('TRABAJOS contiene los diez trabajos estándar del taller', () => {
     'Vibrador',
     'Botones',
     'Vidrio trasero',
+    'Placa',
   ])
 })
 

@@ -32,7 +32,7 @@ test('se guarda un ingreso sin IMEI ni modelo', async () => {
   creadas.push(f.numero)
   equiposCreados.add(f.equipoId)
   expect(f.numero).toBeGreaterThan(0)
-  expect(f.estado).toBe('en_taller')
+  expect(f.estado).toBe('recibido')
 })
 
 test('un ingreso con IMEI crea el equipo con ese IMEI', async () => {
@@ -77,6 +77,6 @@ test('intentarGuardarIngreso devuelve la ficha cuando la base responde', async (
     creadas.push(resultado.ficha.numero)
     equiposCreados.add(resultado.ficha.equipoId)
     expect(resultado.ficha.numero).toBeGreaterThan(0)
-    expect(resultado.ficha.estado).toBe('en_taller')
+    expect(resultado.ficha.estado).toBe('recibido')
   }
 })

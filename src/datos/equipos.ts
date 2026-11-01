@@ -1,7 +1,8 @@
-import { and, desc, eq } from 'drizzle-orm'
+import { and, desc, eq, inArray, or, sql, type SQL } from 'drizzle-orm'
 import { obtenerDb } from '@/db/cliente'
 import { equipo, ficha } from '@/db/esquema'
 import { normalizarImei } from '@/dominio/equipo'
+import { ESTADOS_ABIERTOS } from '@/dominio/ficha'
 
 export type Equipo = typeof equipo.$inferSelect
 export type Ficha = typeof ficha.$inferSelect
@@ -10,6 +11,7 @@ export type EntradaHistorialImei = {
   numero: number
   trabajos: string[]
   entregadoEn: Date
+  estado?: Ficha['estado']
 }
 
 const CAMPOS_IDENTIDAD = [
@@ -33,7 +35,7 @@ export async function buscarPorImei(imei: string): Promise<Equipo | null> {
 
 /**
  * Entrada lista para decidirVinculacion: el equipo con ese IMEI y si tiene una ficha
- * abierta (estado 'en_taller'). Hermana de buscarPorImei para no cambiar su firma.
+ * abierta (recibida, en reparación o lista). Hermana de buscarPorImei para no cambiar su firma.
  */
 export async function buscarVinculablePorImei(
   imei: string,
@@ -43,7 +45,7 @@ export async function buscarVinculablePorImei(
   const abiertas = await obtenerDb()
     .select({ numero: ficha.numero })
     .from(ficha)
-    .where(and(eq(ficha.equipoId, encontrado.id), eq(ficha.estado, 'en_taller')))
+    .where(and(eq(ficha.equipoId, encontrado.id), inArray(ficha.estado, [...ESTADOS_ABIERTOS])))
     .limit(1)
   return { id: encontrado.id, tieneFichaAbierta: abiertas.length > 0 }
 }
@@ -104,4 +106,37 @@ export async function fusionarEquipos(origenId: string, destinoId: string): Prom
       await tx.update(equipo).set(heredado).where(eq(equipo.id, destinoId))
     }
   })
+}
+
+export type IdentificadoresEquipo = {
+  imei?: string | null
+  numeroSerie?: string | null
+  udid?: string | null
+  ecid?: string | null
+}
+
+/**
+ * Las fichas anteriores de un equipo encontrado por cualquier identificador (plan §3.4,
+ * punto 3): sirve para un iPad sin IMEI o un equipo en recuperación que solo da ECID.
+ */
+export async function historialPorIdentificadores(ids: IdentificadoresEquipo): Promise<EntradaHistorialImei[]> {
+  const condiciones: SQL[] = []
+  const imei = ids.imei ? normalizarImei(ids.imei) : null
+  if (imei) condiciones.push(eq(equipo.imei, imei))
+  if (ids.numeroSerie) condiciones.push(sql`upper(${equipo.numeroSerie}) = ${ids.numeroSerie.toUpperCase()}`)
+  if (ids.udid) condiciones.push(eq(equipo.udid, ids.udid))
+  if (ids.ecid) condiciones.push(eq(equipo.ecid, ids.ecid))
+  if (condiciones.length === 0) return []
+  const filas = await obtenerDb()
+    .select({ ficha })
+    .from(ficha)
+    .innerJoin(equipo, eq(ficha.equipoId, equipo.id))
+    .where(or(...condiciones))
+    .orderBy(desc(ficha.numero))
+  return filas.map(({ ficha: f }) => ({
+    numero: f.numero,
+    trabajos: Array.isArray(f.trabajosRealizados) ? f.trabajosRealizados : [],
+    entregadoEn: f.entregadoEn ?? f.recibidoEn,
+    estado: f.estado,
+  }))
 }

@@ -113,7 +113,7 @@ test('obtenerFicha devuelve null si no existe', async () => {
 
 test('se guarda un ingreso totalmente vacío (equipo apagado)', async () => {
   const f = await nueva(ingresoVacio())
-  expect(f.estado).toBe('en_taller')
+  expect(f.estado).toBe('recibido')
   expect(f.congeladaEn).toBeNull()
   expect((await obtenerEquipo(f.equipoId))!.imei).toBeNull()
 })

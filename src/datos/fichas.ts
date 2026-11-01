@@ -1,13 +1,23 @@
-import { and, asc, desc, eq, gte, inArray, isNull, ne, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, gte, inArray, isNull, or, sql, type SQL } from 'drizzle-orm'
 import { leerAjustes, type AjustesTaller } from '@/datos/ajustes'
 import { catalogoActivo, catalogoPorVersion } from '@/datos/catalogo'
 import { obtenerEquipo, type Ficha } from '@/datos/equipos'
 import { obtenerDb, type DrizzleDb } from '@/db/cliente'
-import { equipo, ficha, notaPosterior } from '@/db/esquema'
+import { equipo, ficha, notaPosterior, registroEquipo } from '@/db/esquema'
 import { compararBateria, type ComparacionBateria, type LecturaBateria } from '@/dominio/bateria'
 import { limpiarChecklist, type Checklist, type LineaCatalogo } from '@/dominio/checklist'
 import { normalizarImei } from '@/dominio/equipo'
-import { transicionPermitida, type DatosIngreso, type EstadoFicha } from '@/dominio/ficha'
+import {
+  ESTADOS_ABIERTOS,
+  ESTADOS_CERRADOS,
+  transicionPermitida,
+  type Accesorio,
+  type DatosIngreso,
+  type EstadoCierre,
+  type EstadoFicha,
+  type ResultadoVigilancia,
+} from '@/dominio/ficha'
+import type { EventoEstabilidad, Lectura } from '@/dominio/lectura'
 
 export type NotaPosterior = typeof notaPosterior.$inferSelect
 export type FichaConNotas = Ficha & { notasPosteriores: NotaPosterior[] }
@@ -23,12 +33,34 @@ export type FilaInicio = {
   trabajos: string[]
 }
 
-/** Datos de ingreso; sin catalogoVersion se usa la versión del catálogo en vigor. */
-export type EntradaIngreso = Omit<DatosIngreso, 'catalogoVersion'> & { catalogoVersion?: number }
+/** Identificadores extra que entrega el USB; con ellos se reconoce un equipo sin IMEI. */
+export type IdentidadExtra = {
+  imei2?: string | null
+  udid?: string | null
+  ecid?: string | null
+  numeroModelo?: string | null
+  region?: string | null
+  color?: string | null
+}
+
+/**
+ * Datos de ingreso; sin catalogoVersion se usa la versión del catálogo en vigor. Lo del
+ * rediseño (lectura USB, accesorios, código, cláusulas) es opcional: un ingreso manual
+ * sigue siendo válido sin nada de eso.
+ */
+export type EntradaIngreso = Omit<DatosIngreso, 'catalogoVersion'> & {
+  catalogoVersion?: number
+  identidad?: IdentidadExtra
+  lectura?: Lectura | null
+  accesorios?: Accesorio[]
+  codigoEntregado?: boolean | null
+  clausulasVersion?: number | null
+  garantiaMeses?: number | null
+}
 
 export type ResultadoIngreso =
   | { ok: true; ficha: Ficha }
-  | { ok: false; mensaje: string; datos: DatosIngreso }
+  | { ok: false; mensaje: string; datos: EntradaIngreso & { catalogoVersion: number } }
 
 /** Campos que solo cambian por cerrarFicha o por la base: actualizarFicha no los toca. */
 const CAMPOS_RESERVADOS = ['numero', 'equipoId', 'estado', 'entregadoEn', 'congeladaEn'] as const
@@ -37,18 +69,81 @@ const errorInexistente = (numero: number) => new Error(`La ficha ${numero} no ex
 const errorCongelada = (numero: number) =>
   new Error(`La ficha ${numero} está congelada: ya fue entregada y no se puede editar. Agrega una nota posterior.`)
 
+/**
+ * El equipo que ya pasó por el taller, por el identificador más fuerte que haya: IMEI,
+ * número de serie, UDID o ECID (un iPad Wi-Fi no tiene IMEI y un equipo en recuperación
+ * solo da ECID y serie).
+ */
+async function equipoExistente(
+  tx: Pick<DrizzleDb, 'select'>,
+  ids: { imei: string | null; numeroSerie: string | null; udid: string | null; ecid: string | null },
+): Promise<string | undefined> {
+  const condiciones: SQL[] = []
+  if (ids.imei) condiciones.push(eq(equipo.imei, ids.imei))
+  if (ids.numeroSerie) condiciones.push(sql`upper(${equipo.numeroSerie}) = ${ids.numeroSerie.toUpperCase()}`)
+  if (ids.udid) condiciones.push(eq(equipo.udid, ids.udid))
+  if (ids.ecid) condiciones.push(eq(equipo.ecid, ids.ecid))
+  if (condiciones.length === 0) return undefined
+  // El IMEI manda: si hay varios candidatos, gana el que coincide por IMEI.
+  const filas = await tx.select({ id: equipo.id, imei: equipo.imei }).from(equipo).where(or(...condiciones))
+  return (filas.find((f) => ids.imei && f.imei === ids.imei) ?? filas[0])?.id
+}
+
+/** Filas de registro_equipo a partir de los eventos de una lectura. */
+function filasRegistro(numero: number, momento: 'ingreso' | 'salida' | 'vigilancia', eventos: EventoEstabilidad[]) {
+  return eventos.map((e) => ({
+    fichaNumero: numero,
+    momento,
+    tipo: e.tipo,
+    fechaEvento: e.fecha ? new Date(e.fecha) : null,
+    nombreOriginal: e.nombre,
+    resumen: e.resumen,
+    texto: e.texto,
+    causaProbable: e.causaProbable,
+    lineaChecklist: e.lineaChecklist,
+    sha256: e.sha256,
+  }))
+}
+
 export async function crearFicha(datos: EntradaIngreso, db: DrizzleDb = obtenerDb()): Promise<Ficha> {
   const catalogoVersion = datos.catalogoVersion ?? (await catalogoActivo(db)).version
   // Quien escribe normaliza: un IMEI mal formado se guarda como null, nunca como identidad.
   const imei = datos.imei === null ? null : normalizarImei(datos.imei)
+  const extra = datos.identidad ?? {}
+  const identidad = {
+    imei2: extra.imei2 ? normalizarImei(extra.imei2) : null,
+    udid: extra.udid ?? null,
+    ecid: extra.ecid ?? null,
+    numeroModelo: extra.numeroModelo ?? null,
+    region: extra.region ?? null,
+    color: extra.color ?? null,
+  }
 
   return db.transaction(async (tx) => {
-    let equipoId: string | undefined
-    if (imei) {
-      const [existente] = await tx.select({ id: equipo.id }).from(equipo).where(eq(equipo.imei, imei))
-      equipoId = existente?.id
-    }
-    if (!equipoId) {
+    let equipoId = await equipoExistente(tx, {
+      imei,
+      numeroSerie: datos.numeroSerie,
+      udid: identidad.udid,
+      ecid: identidad.ecid,
+    })
+    if (equipoId) {
+      // Completa lo que el equipo conocido no tenía; nunca pisa un dato ya guardado.
+      const [actual] = await tx.select().from(equipo).where(eq(equipo.id, equipoId))
+      const candidatos = {
+        imei,
+        numeroSerie: datos.numeroSerie,
+        modeloProducto: datos.modeloProducto,
+        modeloComercial: datos.modeloComercial || null,
+        capacidad: datos.capacidad,
+        ...identidad,
+      }
+      const completar: Partial<Record<keyof typeof candidatos, string>> = {}
+      for (const campo of Object.keys(candidatos) as (keyof typeof candidatos)[]) {
+        const valor = candidatos[campo]
+        if (valor && actual[campo] == null) completar[campo] = valor
+      }
+      if (Object.keys(completar).length > 0) await tx.update(equipo).set(completar).where(eq(equipo.id, equipoId))
+    } else {
       const [nuevo] = await tx
         .insert(equipo)
         .values({
@@ -57,6 +152,7 @@ export async function crearFicha(datos: EntradaIngreso, db: DrizzleDb = obtenerD
           modeloProducto: datos.modeloProducto,
           modeloComercial: datos.modeloComercial || null,
           capacidad: datos.capacidad,
+          ...identidad,
         })
         .returning({ id: equipo.id })
       equipoId = nuevo.id
@@ -66,8 +162,11 @@ export async function crearFicha(datos: EntradaIngreso, db: DrizzleDb = obtenerD
       .values({
         equipoId,
         iosVersion: datos.iosVersion,
+        build: datos.lectura?.sistema.build ?? null,
         bateriaPct: datos.bateriaPct,
         bateriaCiclos: datos.bateriaCiclos,
+        codigoProtegido: datos.lectura?.seguridad.codigoConfigurado ?? null,
+        estadoActivacion: datos.lectura?.seguridad.activacion ?? null,
         pidioCliente: datos.pidioCliente,
         quienLoTrajo: datos.quienLoTrajo,
         telefono: datos.telefono,
@@ -75,8 +174,15 @@ export async function crearFicha(datos: EntradaIngreso, db: DrizzleDb = obtenerD
         checklistIngreso: limpiarChecklist(datos.checklistIngreso),
         catalogoVersion,
         origenDatos: datos.origenDatos,
+        lecturaIngreso: datos.lectura ?? null,
+        accesorios: datos.accesorios ?? [],
+        codigoEntregado: datos.codigoEntregado ?? null,
+        clausulasVersion: datos.clausulasVersion ?? null,
+        garantiaMeses: datos.garantiaMeses ?? null,
       })
       .returning()
+    const eventos = datos.lectura?.estabilidad?.eventos ?? []
+    if (eventos.length > 0) await tx.insert(registroEquipo).values(filasRegistro(creada.numero, 'ingreso', eventos))
     return creada
   })
 }
@@ -87,7 +193,7 @@ export async function crearFicha(datos: EntradaIngreso, db: DrizzleDb = obtenerD
  * originales para que el formulario conserve todo lo que el técnico ya escribió.
  */
 export async function intentarGuardarIngreso(
-  datos: DatosIngreso,
+  datos: EntradaIngreso & { catalogoVersion: number },
   deps: { db: DrizzleDb } = { db: obtenerDb() },
 ): Promise<ResultadoIngreso> {
   try {
@@ -151,17 +257,92 @@ export async function actualizarFicha(numero: number, cambios: Partial<Ficha>): 
   return actualizada
 }
 
+/**
+ * Mueve una ficha abierta por el camino del taller (recibido, en reparación, listo) y
+ * anota cuándo. Cerrar es cerrarFicha: sella la ficha además de cambiar el estado.
+ */
+export async function cambiarEstado(numero: number, hacia: 'recibido' | 'en_reparacion' | 'listo'): Promise<Ficha> {
+  const actual = await obtenerFicha(numero)
+  if (!actual) throw errorInexistente(numero)
+  if (actual.congeladaEn !== null) throw errorCongelada(numero)
+  if (!transicionPermitida(actual.estado, hacia)) {
+    throw new Error(`La ficha ${numero} no puede pasar de "${actual.estado}" a "${hacia}".`)
+  }
+  const ahora = new Date()
+  const marcas = hacia === 'en_reparacion' ? { enReparacionEn: ahora } : hacia === 'listo' ? { listoEn: ahora } : {}
+  const [cambiada] = await obtenerDb()
+    .update(ficha)
+    .set({ estado: hacia, ...marcas })
+    .where(and(eq(ficha.numero, numero), eq(ficha.estado, actual.estado), isNull(ficha.congeladaEn)))
+    .returning()
+  if (!cambiada) throw new Error(`La ficha ${numero} cambió mientras se editaba; vuelve a abrirla.`)
+  return cambiada
+}
+
 /** Sella la ficha: fija el estado final y escribe entregado_en y congelada_en con la misma hora. */
-export async function cerrarFicha(numero: number, estado: 'entregado' | 'entregado_sin_reparar'): Promise<Ficha> {
-  if (!transicionPermitida('en_taller', estado)) throw new Error(`Estado de cierre no válido: ${estado}.`)
+export async function cerrarFicha(numero: number, estado: EstadoCierre): Promise<Ficha> {
+  if (!ESTADOS_CERRADOS.includes(estado)) throw new Error(`Estado de cierre no válido: ${estado}.`)
   const ahora = new Date()
   const [cerrada] = await obtenerDb()
     .update(ficha)
     .set({ estado, entregadoEn: ahora, congeladaEn: ahora })
-    .where(and(eq(ficha.numero, numero), eq(ficha.estado, 'en_taller'), isNull(ficha.congeladaEn)))
+    .where(and(eq(ficha.numero, numero), inArray(ficha.estado, [...ESTADOS_ABIERTOS]), isNull(ficha.congeladaEn)))
     .returning()
   if (!cerrada) throw await explicarRechazo(numero)
   return cerrada
+}
+
+/**
+ * Guarda la lectura USB de salida y llena la batería de salida desde ella. Los registros
+ * que no estaban en el ingreso quedan como registros de salida.
+ */
+export async function guardarLecturaSalida(numero: number, lectura: Lectura): Promise<Ficha> {
+  const actualizada = await actualizarFicha(numero, {
+    lecturaSalida: lectura,
+    bateriaSalidaPct: lectura.bateria?.saludPct ?? null,
+    bateriaSalidaCiclos: lectura.bateria?.ciclos ?? null,
+  })
+  await guardarRegistrosNuevos(numero, 'salida', lectura.estabilidad?.eventos ?? [])
+  return actualizada
+}
+
+/** El resultado de la vigilancia en vivo y las fallas que aparecieron durante ella. */
+export async function guardarVigilancia(
+  numero: number,
+  resultado: ResultadoVigilancia,
+  eventos: EventoEstabilidad[],
+): Promise<Ficha> {
+  const actualizada = await actualizarFicha(numero, { vigilanciaSalida: resultado })
+  await guardarRegistrosNuevos(numero, 'vigilancia', eventos)
+  return actualizada
+}
+
+async function guardarRegistrosNuevos(
+  numero: number,
+  momento: 'salida' | 'vigilancia',
+  eventos: EventoEstabilidad[],
+): Promise<void> {
+  if (eventos.length === 0) return
+  const db = obtenerDb()
+  const guardados = await db
+    .select({ nombre: registroEquipo.nombreOriginal })
+    .from(registroEquipo)
+    .where(eq(registroEquipo.fichaNumero, numero))
+  const yaGuardados = new Set(guardados.map((r) => r.nombre))
+  const nuevos = eventos.filter((e) => !yaGuardados.has(e.nombre))
+  if (nuevos.length > 0) {
+    await db.insert(registroEquipo).values(filasRegistro(numero, momento, nuevos)).onConflictDoNothing()
+  }
+}
+
+export type RegistroEquipo = typeof registroEquipo.$inferSelect
+
+export async function registrosDeFicha(numero: number): Promise<RegistroEquipo[]> {
+  return obtenerDb()
+    .select()
+    .from(registroEquipo)
+    .where(eq(registroEquipo.fichaNumero, numero))
+    .orderBy(desc(registroEquipo.fechaEvento), asc(registroEquipo.id))
 }
 
 /** Única forma de agregar algo a una ficha cerrada. Solo inserta: nunca toca la ficha. */
@@ -202,6 +383,7 @@ function mapearFilaInicio(f: FilaCrudaInicio): FilaInicio {
   }
 }
 
+/** Las fichas abiertas: recibidas, en reparación o listas para entregar. */
 export async function equiposEnTaller(): Promise<FilaInicio[]> {
   const filas = await obtenerDb()
     .select({
@@ -216,7 +398,7 @@ export async function equiposEnTaller(): Promise<FilaInicio[]> {
     })
     .from(ficha)
     .innerJoin(equipo, eq(ficha.equipoId, equipo.id))
-    .where(eq(ficha.estado, 'en_taller'))
+    .where(inArray(ficha.estado, [...ESTADOS_ABIERTOS]))
     .orderBy(desc(ficha.recibidoEn), desc(ficha.numero))
   return filas.map(mapearFilaInicio)
 }
@@ -236,7 +418,7 @@ export async function ultimasEntregadas(limite: number): Promise<FilaInicio[]> {
     })
     .from(ficha)
     .innerJoin(equipo, eq(ficha.equipoId, equipo.id))
-    .where(ne(ficha.estado, 'en_taller'))
+    .where(inArray(ficha.estado, [...ESTADOS_CERRADOS]))
     .orderBy(desc(ficha.entregadoEn), desc(ficha.numero))
     .limit(limite)
   return filas.map(mapearFilaInicio)
@@ -269,7 +451,7 @@ export async function contarEntregadasDesde(desde: Date): Promise<number> {
   const [fila] = await obtenerDb()
     .select({ total: sql<number>`count(*)::int` })
     .from(ficha)
-    .where(and(ne(ficha.estado, 'en_taller'), gte(ficha.entregadoEn, desde)))
+    .where(and(inArray(ficha.estado, [...ESTADOS_CERRADOS]), gte(ficha.entregadoEn, desde)))
   return fila?.total ?? 0
 }
 
@@ -290,6 +472,9 @@ export async function buscar(texto: string): Promise<FilaInicio[]> {
   const numeroBuscado = /^\d{1,9}$/.test(soloDigitos) ? Number.parseInt(soloDigitos, 10) : null
   const imeiCandidato = normalizarImei(limpio)
   const patronImei = `%${imeiCandidato ?? terminoNormalizado}%`
+  // Un teléfono se busca solo por sus dígitos: "+56 9 1234 5678" encuentra "912345678".
+  const digitos = limpio.replace(/[^0-9]/g, '')
+  const soloTelefono = digitos.length >= 6 && /^[0-9\s+()-]+$/.test(limpio) ? digitos.replace(/^56/, '') : null
 
   const condicion = sql`(
     ${numeroBuscado !== null ? sql`${ficha.numero} = ${numeroBuscado} or` : sql``}
@@ -297,6 +482,7 @@ export async function buscar(texto: string): Promise<FilaInicio[]> {
     or lower(coalesce(${equipo.numeroSerie}, '')) like ${patron}
     or translate(lower(coalesce(${equipo.modeloComercial}, '')), 'áéíóúüñ', 'aeiouun') like ${patron}
     or translate(lower(coalesce(${ficha.quienLoTrajo}, '')), 'áéíóúüñ', 'aeiouun') like ${patron}
+    ${soloTelefono ? sql`or regexp_replace(coalesce(${ficha.telefono}, ''), '[^0-9]', '', 'g') like ${`%${soloTelefono}%`}` : sql``}
   )`
 
   const ordenPrioridad =

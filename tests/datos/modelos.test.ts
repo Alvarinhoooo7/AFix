@@ -23,7 +23,7 @@ test('ningún nombre comercial queda vacío', async () => {
   const tabla = await cargarTablaModelos()
   expect(tabla.size).toBeGreaterThan(0)
   for (const [codigo, nombre] of tabla) {
-    expect(codigo).toMatch(/^iPhone\d+,\d+$/)
+    expect(codigo).toMatch(/^(iPhone|iPad)\d+,\d+$/)
     expect(nombre.trim()).not.toBe('')
   }
 })

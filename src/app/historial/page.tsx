@@ -10,7 +10,8 @@ const LIMITE = 200
 
 const FILTROS = [
   { clave: 'todas', etiqueta: 'Todas', estados: null },
-  { clave: 'en_taller', etiqueta: 'En taller', estados: ['en_taller'] },
+  { clave: 'en_taller', etiqueta: 'En taller', estados: ['recibido', 'en_reparacion', 'listo'] },
+  { clave: 'listos', etiqueta: 'Listos para entregar', estados: ['listo'] },
   { clave: 'entregadas', etiqueta: 'Entregadas', estados: ['entregado', 'entregado_sin_reparar'] },
   { clave: 'sin_reparar', etiqueta: 'Sin reparar', estados: ['entregado_sin_reparar'] },
 ] as const satisfies readonly { clave: string; etiqueta: string; estados: readonly EstadoFicha[] | null }[]

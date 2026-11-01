@@ -1,12 +1,11 @@
 import Link from 'next/link'
 import type { FilaInicio } from '@/datos/fichas'
+import { ETIQUETA_ESTADO } from '@/dominio/ficha'
 
 const DIA_MS = 24 * 60 * 60 * 1000
 
 export function etiquetaEstado(estado: FilaInicio['estado']): string {
-  if (estado === 'en_taller') return 'En taller'
-  if (estado === 'entregado_sin_reparar') return 'Entregado sin reparar'
-  return 'Entregado'
+  return ETIQUETA_ESTADO[estado]
 }
 
 function fechaCorta(fecha: Date): string {
@@ -59,6 +58,7 @@ export function ListaFichas({
             </div>
             {modo === 'pendientes' ? (
               <div className="fila-inicio-estado">
+                <span className={`marca-estado marca-estado-${fila.estado}`}>{etiquetaEstado(fila.estado)}</span>
                 <span>{antiguedad(fila.recibidoEn, ahora)}</span>
                 <span className="fila-inicio-meta">Recibido el {fechaCorta(fila.recibidoEn)}</span>
               </div>

@@ -84,12 +84,12 @@ test('fusionar un equipo consigo mismo falla', async () => {
   }
 })
 
-test('buscarVinculablePorImei marca ficha abierta solo si hay una en_taller', async () => {
+test('buscarVinculablePorImei marca ficha abierta solo si hay una abierta', async () => {
   const [abierto] = await db.insert(equipo).values({ imei: '358721094473324' }).returning()
   const [cerrado] = await db.insert(equipo).values({ imei: '358721094473325' }).returning()
   try {
     await db.insert(ficha).values([
-      { equipoId: abierto.id, estado: 'en_taller' },
+      { equipoId: abierto.id, estado: 'recibido' },
       { equipoId: cerrado.id, estado: 'entregado' },
     ])
     expect(await buscarVinculablePorImei('358721094473324')).toEqual({ id: abierto.id, tieneFichaAbierta: true })

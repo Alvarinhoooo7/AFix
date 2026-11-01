@@ -12,6 +12,7 @@ import {
 } from '@/datos/fichas'
 import { obtenerDb } from '@/db/cliente'
 import { equipo, ficha } from '@/db/esquema'
+import { ESTADOS_ABIERTOS } from '@/dominio/ficha'
 import { ingresoMinimo } from '../ayudas'
 
 const db = obtenerDb()
@@ -63,7 +64,7 @@ afterAll(async () => {
 test('los equipos en taller salen primero y no incluyen entregados', async () => {
   const filas = await equiposEnTaller()
   expect(filas.length).toBeGreaterThan(0)
-  expect(filas.every((f) => f.estado === 'en_taller')).toBe(true)
+  expect(filas.every((f) => ESTADOS_ABIERTOS.includes(f.estado))).toBe(true)
   expect(filas.some((f) => f.numero === numeroEnTaller)).toBe(true)
   expect(filas.some((f) => f.numero === numeroEntregada)).toBe(false)
 })
@@ -72,7 +73,7 @@ test('ultimasEntregadas devuelve solo fichas cerradas hasta el límite pedido', 
   const filas = await ultimasEntregadas(5)
   expect(filas.length).toBeGreaterThan(0)
   expect(filas.length).toBeLessThanOrEqual(5)
-  expect(filas.every((f) => f.estado !== 'en_taller')).toBe(true)
+  expect(filas.every((f) => !ESTADOS_ABIERTOS.includes(f.estado))).toBe(true)
   expect(filas.some((f) => f.numero === numeroEntregada)).toBe(true)
 })
 
@@ -82,7 +83,7 @@ test('listarFichas trae el historial completo o solo los estados pedidos', async
   expect(todas.some((f) => f.numero === numeroEntregada)).toBe(true)
 
   const entregadas = await listarFichas(['entregado', 'entregado_sin_reparar'], 500)
-  expect(entregadas.every((f) => f.estado !== 'en_taller')).toBe(true)
+  expect(entregadas.every((f) => !ESTADOS_ABIERTOS.includes(f.estado))).toBe(true)
   expect(entregadas.some((f) => f.numero === numeroEntregada)).toBe(true)
 
   expect(await listarFichas([], 500)).toEqual([])
