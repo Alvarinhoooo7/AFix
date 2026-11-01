@@ -49,11 +49,10 @@ export function FormularioIngreso({
   const [observacionIngreso, setObservacionIngreso] = useState(d.observacionIngreso ?? '')
   const [checklist, setChecklist] = useState<ValorChecklist>(d.checklistIngreso)
   const [avisoUsb, setAvisoUsb] = useState(
-    'Carga manual activa. Si conectas el equipo por USB, puedes autocompletar sus datos y verificar periféricos.',
+    'Carga manual activa. Si conectas el equipo por USB, puedes autocompletar sus datos y leer las series de sus piezas.',
   )
   const [escaneandoUsb, setEscaneandoUsb] = useState(false)
   const [perifericosUsb, setPerifericosUsb] = useState<Array<{ nombre: string; serial: string; estado: string }> | null>(null)
-  const [plataformaUsb, setPlataformaUsb] = useState<string | null>(null)
 
   const mapaModelos = new Map(Object.entries(tablaModelos))
   const resolucion = resolverModelo(modeloProducto || null, mapaModelos)
@@ -92,7 +91,6 @@ export function FormularioIngreso({
         return
       }
 
-      setPlataformaUsb(data.plataforma)
       setPerifericosUsb(data.perifericos ?? null)
 
       const eq = data.equipo || {}
@@ -107,22 +105,8 @@ export function FormularioIngreso({
         cambiarImei(eq.imei)
       }
 
-      // Prellenar checklist con componentes verificados
-      if (data.prellenadoChecklist) {
-        setChecklist((prev) => {
-          const nuevo = { ...prev }
-          for (const [clave, val] of Object.entries(data.prellenadoChecklist as Record<string, { estado: string; nota?: string }>)) {
-            const linea = lineasCatalogo.find((l) => l.clave === clave)
-            if (linea && linea.estados.includes(val.estado)) {
-              nuevo[clave] = val
-            }
-          }
-          return nuevo
-        })
-      }
-
-      const plat = data.plataforma === 'ios' ? 'iPhone' : 'Android'
-      setAvisoUsb(`Equipo ${plat} (${eq.modeloComercial || eq.modeloProducto}) leído exitosamente. Datos y checklist precargados.`)
+      // El checklist no se toca: que el equipo responda por USB no prueba que algo funcione.
+      setAvisoUsb(`iPhone (${eq.modeloComercial || eq.modeloProducto}) leído por USB. Datos del equipo cargados; el checklist se completa en la inspección.`)
     } catch {
       setAvisoUsb('El lector USB local no respondió. Continúa cargando a mano.')
     } finally {
@@ -135,7 +119,7 @@ export function FormularioIngreso({
     const lineasReporte = perifericosUsb
       .map((p) => `- ${p.nombre}: ${p.serial} (${p.estado})`)
       .join('\n')
-    const cabecera = `[Diagnóstico de hardware USB - ${plataformaUsb === 'ios' ? 'iPhone' : 'Android'}]`
+    const cabecera = '[Lectura USB del iPhone]'
     const bloque = `${cabecera}\n${lineasReporte}`
     setObservacionIngreso((prev) => (prev ? `${prev}\n\n${bloque}` : bloque))
   }
@@ -199,7 +183,7 @@ export function FormularioIngreso({
         <section className="panel-perifericos seccion" aria-label="Verificación de componentes USB">
           <div className="panel-perifericos-cabecera">
             <h3 className="panel-perifericos-titulo">
-              Hardware y periféricos verificados ({plataformaUsb === 'ios' ? 'iPhone' : 'Android'})
+              Piezas leídas por USB
             </h3>
             <button
               type="button"
@@ -272,7 +256,7 @@ export function FormularioIngreso({
               editable
             />
             <Campo
-              etiqueta={plataformaUsb === 'android' ? 'Versión de Android' : 'Versión de iOS'}
+              etiqueta="Versión de iOS"
               nombre="iosVersion"
               valor={iosVersion}
               onChange={setIosVersion}

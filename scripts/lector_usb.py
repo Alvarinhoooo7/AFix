@@ -1,7 +1,5 @@
 import asyncio
 import json
-import os
-import subprocess
 import sys
 
 # Asegurar salida utf-8 en Windows
@@ -123,33 +121,27 @@ async def leer_iphone():
         elif c_id:
             carrier = c_id
 
+    # El USB solo afirma lo que leyó: que la pieza entregue su serie no prueba que funcione.
+    def leido(serial):
+        return "Serie leída por USB" if serial and serial != "No detectado" else "No informado por el equipo"
+
     perifericos = [
-        {"nombre": "Placa madre (MLB)", "serial": mlb_serial, "estado": "Operativa / Respondiendo"},
+        {"nombre": "Placa madre (MLB)", "serial": mlb_serial, "estado": leido(mlb_serial)},
         {
             "nombre": "Batería",
             "serial": serial_bat,
-            "estado": f"{salud_pct}% salud ({bat_nominal}/{bat_diseno} mAh) · {ciclos} ciclos · Carga: {carga_actual}%" if salud_pct else "Operativa",
+            "estado": f"{salud_pct}% salud ({bat_nominal}/{bat_diseno} mAh) · {ciclos} ciclos · Carga: {carga_actual}%" if salud_pct else leido(serial_bat),
         },
-        {"nombre": "Pantalla OLED", "serial": panel_serial, "estado": "Operativa / Calibración activa"},
-        {"nombre": "Cámara trasera (Principal)", "serial": cam_back_wide, "estado": "Operativa / Sensor detectado"},
-        {"nombre": "Cámara trasera (Ultra gran angular)", "serial": cam_back_ultra, "estado": "Operativa / Sensor detectado"},
-        {"nombre": "Cámara frontal", "serial": cam_front, "estado": "Operativa / Sensor detectado"},
-        {"nombre": "Face ID (Sensor IR TrueDepth)", "serial": faceid_ir, "estado": "Operativo"},
-        {"nombre": "Face ID (Proyector de puntos)", "serial": faceid_projector, "estado": "Operativo"},
-        {"nombre": "Wi-Fi", "serial": wifi_mac, "estado": "Operativo"},
-        {"nombre": "Bluetooth", "serial": bt_mac, "estado": "Operativo"},
-        {"nombre": "Módem celular (Baseband)", "serial": f"Firmware {baseband_ver}", "estado": f"Operativo ({carrier})"},
+        {"nombre": "Pantalla OLED", "serial": panel_serial, "estado": leido(panel_serial)},
+        {"nombre": "Cámara trasera (Principal)", "serial": cam_back_wide, "estado": leido(cam_back_wide)},
+        {"nombre": "Cámara trasera (Ultra gran angular)", "serial": cam_back_ultra, "estado": leido(cam_back_ultra)},
+        {"nombre": "Cámara frontal", "serial": cam_front, "estado": leido(cam_front)},
+        {"nombre": "Face ID (Sensor IR TrueDepth)", "serial": faceid_ir, "estado": leido(faceid_ir)},
+        {"nombre": "Face ID (Proyector de puntos)", "serial": faceid_projector, "estado": leido(faceid_projector)},
+        {"nombre": "Wi-Fi", "serial": wifi_mac, "estado": "Dirección MAC leída por USB"},
+        {"nombre": "Bluetooth", "serial": bt_mac, "estado": "Dirección MAC leída por USB"},
+        {"nombre": "Módem celular (Baseband)", "serial": f"Firmware {baseband_ver}", "estado": f"Operador: {carrier}"},
     ]
-
-    # Prellenado de checklist
-    prellenado = {
-        "pantalla_tactil": {"estado": "Bien", "nota": "Panel y calibración activos por USB"},
-        "face_id": {"estado": "Bien" if faceid_ir != "No detectado" else "No probado", "nota": "Sensores TrueDepth e IR validados"},
-        "camara_trasera": {"estado": "Bien" if cam_back_wide != "No detectado" else "No probado", "nota": "Sensor gran angular validado"},
-        "camara_frontal": {"estado": "Bien" if cam_front != "No detectado" else "No probado", "nota": "Sensor frontal validado"},
-        "carga": {"estado": "Bien", "nota": f"USB conectado ({carga_actual}%)"},
-        "wifi_senal": {"estado": "Bien", "nota": f"Wi-Fi y Baseband activos ({carrier})"},
-    }
 
     resultado = {
         "exito": True,
@@ -164,130 +156,19 @@ async def leer_iphone():
             "numeroSerie": serie,
             "bateriaPct": salud_pct,
             "bateriaCiclos": ciclos,
-            "color": "Medianoche",
+            "color": "",
         },
         "perifericos": perifericos,
-        "prellenadoChecklist": prellenado,
     }
     return resultado, None
 
-def leer_android():
-    adb_paths = [
-        r"C:\Android\sdk\platform-tools\adb.exe",
-        "adb"
-    ]
-    adb_bin = None
-    for p in adb_paths:
-        try:
-            res = subprocess.run([p, "version"], capture_output=True, text=True, timeout=3)
-            if res.returncode == 0:
-                adb_bin = p
-                break
-        except Exception:
-            continue
-
-    if not adb_bin:
-        return None, "ADB no encontrado"
-
-    try:
-        devices_out = subprocess.run([adb_bin, "devices"], capture_output=True, text=True, timeout=4)
-        lines = [line.strip() for line in devices_out.stdout.strip().split("\n")[1:] if line.strip()]
-        if not lines:
-            return None, "No hay dispositivos Android conectados por ADB"
-        
-        device_line = lines[0].split()
-        device_id = device_line[0]
-        device_status = device_line[1] if len(device_line) > 1 else "unknown"
-
-        if device_status == "unauthorized":
-            return None, "Dispositivo Android detectado pero 'No autorizado'. Desbloquea la pantalla y acepta 'Permitir depuración USB'."
-
-        def get_prop(prop):
-            r = subprocess.run([adb_bin, "-s", device_id, "shell", "getprop", prop], capture_output=True, text=True, timeout=3)
-            return r.stdout.strip()
-
-        marca = get_prop("ro.product.manufacturer").capitalize()
-        modelo = get_prop("ro.product.model")
-        serie = get_prop("ro.serialno") or device_id
-        android_ver = get_prop("ro.build.version.release")
-        
-        # Batería
-        salud_pct = None
-        ciclos = None
-        bat_out = subprocess.run([adb_bin, "-s", device_id, "shell", "dumpsys", "battery"], capture_output=True, text=True, timeout=3)
-        bat_lines = bat_out.stdout.split("\n")
-        bat_nivel = None
-        for bl in bat_lines:
-            bl_s = bl.strip()
-            if bl_s.startswith("level:"):
-                try:
-                    bat_nivel = int(bl_s.split(":")[1].strip())
-                except Exception:
-                    pass
-            elif bl_s.startswith("cycle count:"):
-                try:
-                    ciclos = int(bl_s.split(":")[1].strip())
-                except Exception:
-                    pass
-
-        # Capacidad de almacenamiento
-        capacidad = ""
-        df_out = subprocess.run([adb_bin, "-s", device_id, "shell", "df", "-h", "/data"], capture_output=True, text=True, timeout=3)
-        for dfl in df_out.stdout.strip().split("\n")[1:]:
-            parts = dfl.split()
-            if len(parts) >= 2:
-                capacidad = parts[1]
-                break
-
-        perifericos = [
-            {"nombre": "Placa madre", "serial": serie, "estado": "Operativa / Depuración USB activa"},
-            {"nombre": "Batería", "serial": "Integrada", "estado": f"Carga: {bat_nivel}%" if bat_nivel else "Operativa"},
-            {"nombre": "Pantalla", "serial": "Display Android", "estado": "Operativa"},
-            {"nombre": "Sistema Operativo", "serial": f"Android {android_ver}", "estado": "Operativo"},
-        ]
-
-        prellenado = {
-            "pantalla_tactil": {"estado": "Bien", "nota": "Dispositivo respondiendo a comandos ADB"},
-            "carga": {"estado": "Bien", "nota": f"Carga USB activa ({bat_nivel}%)" if bat_nivel else "Carga USB activa"},
-            "wifi_senal": {"estado": "Bien", "nota": "Depuración USB operativa"},
-        }
-
-        return {
-            "exito": True,
-            "plataforma": "android",
-            "equipo": {
-                "modeloProducto": f"{marca} {modelo}".strip(),
-                "modeloComercial": f"{marca} {modelo}".strip(),
-                "capacidad": capacidad,
-                "iosVersion": f"Android {android_ver}",
-                "imei": "",
-                "imei2": "",
-                "numeroSerie": serie,
-                "bateriaPct": salud_pct,
-                "bateriaCiclos": ciclos,
-                "color": "",
-            },
-            "perifericos": perifericos,
-            "prellenadoChecklist": prellenado,
-        }, None
-    except Exception as e:
-        return None, f"Error leyendo dispositivo Android: {e}"
-
 async def main():
-    # 1. Probar iPhone primero
     res_ios, err_ios = await leer_iphone()
     if res_ios:
         print(json.dumps(res_ios, ensure_ascii=True))
         return
 
-    # 2. Probar Android
-    res_android, err_android = leer_android()
-    if res_android:
-        print(json.dumps(res_android, ensure_ascii=True))
-        return
-
-    # 3. Ninguno detectado
-    error_final = err_ios or err_android or "No se detectó ningún dispositivo por USB"
+    error_final = err_ios or "No se detectó ningún iPhone por USB"
     print(json.dumps({
         "exito": False,
         "error": error_final
