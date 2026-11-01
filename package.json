@@ -7,7 +7,9 @@
     "dev": "next dev -H 127.0.0.1",
     "build": "next build",
     "start": "next start -H 127.0.0.1",
-    "test": "vitest run"
+    "test": "vitest run",
+    "taller": "node scripts/taller.mjs",
+    "test:agente": "node scripts/probar-agente.mjs"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.4",
