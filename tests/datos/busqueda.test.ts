@@ -1,6 +1,15 @@
 import { eq } from 'drizzle-orm'
 import { afterAll, beforeAll, expect, test } from 'vitest'
-import { actualizarFicha, cerrarFicha, crearFicha, buscar, equiposEnTaller, ultimasEntregadas } from '@/datos/fichas'
+import {
+  actualizarFicha,
+  cerrarFicha,
+  contarEntregadasDesde,
+  crearFicha,
+  buscar,
+  equiposEnTaller,
+  listarFichas,
+  ultimasEntregadas,
+} from '@/datos/fichas'
 import { obtenerDb } from '@/db/cliente'
 import { equipo, ficha } from '@/db/esquema'
 import { ingresoMinimo } from '../ayudas'
@@ -65,6 +74,25 @@ test('ultimasEntregadas devuelve solo fichas cerradas hasta el límite pedido', 
   expect(filas.length).toBeLessThanOrEqual(5)
   expect(filas.every((f) => f.estado !== 'en_taller')).toBe(true)
   expect(filas.some((f) => f.numero === numeroEntregada)).toBe(true)
+})
+
+test('listarFichas trae el historial completo o solo los estados pedidos', async () => {
+  const todas = await listarFichas(null, 500)
+  expect(todas.some((f) => f.numero === numeroEnTaller)).toBe(true)
+  expect(todas.some((f) => f.numero === numeroEntregada)).toBe(true)
+
+  const entregadas = await listarFichas(['entregado', 'entregado_sin_reparar'], 500)
+  expect(entregadas.every((f) => f.estado !== 'en_taller')).toBe(true)
+  expect(entregadas.some((f) => f.numero === numeroEntregada)).toBe(true)
+
+  expect(await listarFichas([], 500)).toEqual([])
+  expect(await listarFichas(null, 0)).toEqual([])
+})
+
+test('contarEntregadasDesde cuenta las fichas cerradas desde la fecha dada', async () => {
+  const haceUnaHora = new Date(Date.now() - 60 * 60 * 1000)
+  expect(await contarEntregadasDesde(haceUnaHora)).toBeGreaterThan(0)
+  expect(await contarEntregadasDesde(new Date(Date.now() + 60 * 60 * 1000))).toBe(0)
 })
 
 test('busca por número de ficha', async () => {

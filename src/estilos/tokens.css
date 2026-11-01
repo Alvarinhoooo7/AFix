@@ -576,6 +576,193 @@ body {
   color: var(--color-secundario);
 }
 
+/* La columna derecha del renglón: lo que se mira primero (cuánto lleva, o en qué quedó)
+   arriba, y la fecha exacta debajo, en secundario. */
+.fila-inicio-estado {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+  font-family: var(--fuente-estrecha);
+  font-weight: 600;
+  color: var(--color-tinta);
+}
+
+/* "Sin reparar" no es una falla del taller: va en secundario, no en timbre. */
+.marca-estado-en_taller {
+  color: var(--color-linea);
+}
+
+.marca-estado-entregado_sin_reparar {
+  color: var(--color-secundario);
+}
+
+/* La barra de arriba: el borde superior del talonario. Va en todas las pantallas
+   para que siempre se sepa dónde se está y cómo volver. */
+.navegacion {
+  border-bottom: 1px solid color-mix(in srgb, var(--color-linea) 30%, transparent);
+  background: var(--color-fondo);
+}
+
+.navegacion-interior {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 0.6rem 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+}
+
+.navegacion-marca {
+  font-family: var(--fuente-estrecha);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--color-linea);
+  text-decoration: none;
+}
+
+.navegacion-enlaces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  flex: 1 1 auto;
+}
+
+.navegacion-enlace {
+  font-family: var(--fuente-estrecha);
+  font-size: 0.9375rem;
+  color: var(--color-secundario);
+  text-decoration: none;
+  padding: 0.3rem 0 0.2rem;
+  border-bottom: 2px solid transparent;
+}
+
+.navegacion-enlace:hover {
+  color: var(--color-linea);
+}
+
+/* La sección actual se subraya con la regla gruesa de la pauta. */
+.navegacion-enlace-activo {
+  color: var(--color-linea);
+  font-weight: 700;
+  border-bottom-color: var(--color-linea);
+}
+
+.navegacion-ingreso {
+  padding: 0.4rem 1rem;
+}
+
+/* El resumen del panel: tres casilleros preimpresos con su cifra. Son enlaces: cada
+   cifra lleva a la lista que cuenta. */
+.resumen {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.75rem;
+}
+
+.resumen-casilla {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.75rem 1rem;
+  background: var(--color-campo);
+  border-left: 3px solid var(--color-linea);
+  color: var(--color-linea);
+  text-decoration: none;
+  transition: background-color 120ms ease;
+}
+
+.resumen-casilla:hover {
+  background: color-mix(in srgb, var(--color-campo) 60%, var(--color-linea) 12%);
+}
+
+.resumen-numero {
+  font-family: var(--fuente-estrecha);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-tinta);
+}
+
+.resumen-rotulo {
+  font-family: var(--fuente-estrecha);
+  font-size: 0.9375rem;
+}
+
+/* La casilla de acción se invierte, igual que el botón principal. */
+.resumen-casilla-accion {
+  background: var(--color-linea);
+  color: var(--color-fondo);
+}
+
+.resumen-casilla-accion .resumen-numero {
+  color: var(--color-fondo);
+}
+
+.resumen-casilla-accion:hover {
+  background: var(--color-tinta);
+}
+
+.nota-seccion {
+  margin: -0.5rem 0 0.75rem;
+}
+
+.subtitulo-con-enlace {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+
+.subtitulo-texto {
+  font: inherit;
+  margin: 0;
+}
+
+.enlace {
+  font-family: var(--fuente-estrecha);
+  font-size: 0.9375rem;
+  font-weight: 400;
+  color: var(--color-tinta);
+}
+
+/* Filtros del historial: pestañas de talonario sobre la misma regla. */
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1.25rem 0 0;
+}
+
+.filtro {
+  font-family: var(--fuente-estrecha);
+  font-size: 0.9375rem;
+  color: var(--color-linea);
+  text-decoration: none;
+  padding: 0.3rem 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--color-linea) 32%, transparent);
+  border-radius: 2px;
+}
+
+.filtro:hover {
+  border-color: var(--color-linea);
+}
+
+.filtro-activo {
+  background: var(--color-linea);
+  border-color: var(--color-linea);
+  color: var(--color-fondo);
+  font-weight: 600;
+}
+
+.seccion-pegada {
+  margin-top: 1.25rem;
+}
+
 /* Panel de verificación y hardware detectado por USB */
 .panel-perifericos {
   margin-top: 1rem;

@@ -1,94 +1,42 @@
 import Link from 'next/link'
 import { Campo } from '@/componentes/campo'
-import { buscar, equiposEnTaller, ultimasEntregadas, type FilaInicio } from '@/datos/fichas'
+import { ListaFichas } from '@/componentes/lista-fichas'
+import { contarEntregadasDesde, equiposEnTaller, ultimasEntregadas, type FilaInicio } from '@/datos/fichas'
 
-export const metadata = { title: 'AFIX — Servicio técnico' }
+export const metadata = { title: 'Panel — AFIX' }
 
-function etiquetaEstado(estado: FilaInicio['estado']): string {
-  if (estado === 'en_taller') return 'En taller'
-  if (estado === 'entregado_sin_reparar') return 'Entregado sin reparar'
-  return 'Entregado'
-}
-
-function ListaFichas({ filas, vacio }: { filas: FilaInicio[]; vacio: string }) {
-  if (filas.length === 0) {
-    return <p className="nota">{vacio}</p>
-  }
-  return (
-    <div className="lista-fichas">
-      {filas.map((fila) => {
-        const numero = String(fila.numero).padStart(4, '0')
-        const fecha = (fila.entregadoEn ?? fila.recibidoEn).toLocaleDateString('es-CL', {
-          day: 'numeric',
-          month: 'short',
-          year: 'numeric',
-        })
-        const detalles = [
-          fila.quienLoTrajo ? `Traído por ${fila.quienLoTrajo}` : null,
-          fila.imei ? `IMEI ${fila.imei}` : null,
-          fila.trabajos.length > 0 ? fila.trabajos.join(', ') : null,
-        ]
-          .filter(Boolean)
-          .join(' — ')
-
-        return (
-          <Link key={fila.numero} href={`/fichas/${fila.numero}`} className="fila-inicio">
-            <span className="fila-inicio-ficha">Ficha {numero}</span>
-            <div className="fila-inicio-cuerpo">
-              <div className="fila-inicio-modelo">{fila.modeloComercial}</div>
-              {detalles ? <div className="fila-inicio-meta">{detalles}</div> : null}
-            </div>
-            <div className="fila-inicio-meta">
-              {etiquetaEstado(fila.estado)} ({fecha})
-            </div>
-          </Link>
-        )
-      })}
-    </div>
-  )
-}
-
-export default async function Inicio({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string }>
-}) {
-  const { q } = await searchParams
-  const consulta = q?.trim() ?? ''
+/**
+ * El panel responde lo de todos los días, en este orden: qué está pendiente en la mesa,
+ * cómo va el mes y qué se entregó hace poco. Buscar lleva al historial, que es donde
+ * vive la lista completa.
+ */
+export default async function Panel() {
+  const ahora = new Date()
+  const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1)
 
   let enTaller: FilaInicio[] = []
   let entregadas: FilaInicio[] = []
-  let resultados: FilaInicio[] = []
+  let entregadasMes = 0
   let errorConexion = false
 
   try {
-    ;[enTaller, entregadas, resultados] = await Promise.all([
+    ;[enTaller, entregadas, entregadasMes] = await Promise.all([
       equiposEnTaller(),
-      ultimasEntregadas(10),
-      consulta ? buscar(consulta) : Promise.resolve([]),
+      ultimasEntregadas(5),
+      contarEntregadasDesde(inicioMes),
     ])
   } catch {
     errorConexion = true
   }
 
+  const nombreMes = ahora.toLocaleDateString('es-CL', { month: 'long' })
+  const hoy = ahora.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+
   return (
     <main className="hoja">
-      <header className="encabezado-ficha">
-        <div>
-          <h1 className="titulo">AFIX</h1>
-          <p className="nota">Qué hay en la mesa, qué se entregó y dónde buscarlo.</p>
-        </div>
-        <div className="acciones">
-          <Link className="boton" href="/ingreso">
-            Nuevo ingreso
-          </Link>
-          <Link className="boton-secundario" href="/ajustes">
-            Datos del taller
-          </Link>
-          <a className="boton-secundario" href="/api/respaldo">
-            Descargar respaldo
-          </a>
-        </div>
+      <header className="encabezado">
+        <h1 className="titulo">Panel del taller</h1>
+        <p className="nota">{hoy.charAt(0).toUpperCase() + hoy.slice(1)}</p>
       </header>
       <div className="doble-linea" />
 
@@ -98,43 +46,53 @@ export default async function Inicio({
         </p>
       ) : null}
 
-      <section className="seccion" style={{ marginTop: 0 }}>
-        <form method="get" action="/" className="barra-busqueda">
-          <div className="barra-busqueda-campo">
-            <Campo
-              etiqueta="Buscar"
-              nombre="q"
-              valor={consulta}
-              placeholder="Número de ficha, IMEI, número de serie, modelo o quién lo trajo"
-              editable
-            />
-          </div>
-          <button className="boton-secundario" type="submit">
-            Buscar
-          </button>
-          {consulta ? (
-            <Link className="boton-secundario" href="/">
-              Limpiar búsqueda
-            </Link>
-          ) : null}
-        </form>
+      <section className="resumen" aria-label="Resumen">
+        <a className="resumen-casilla" href="#pendientes">
+          <span className="resumen-numero">{enTaller.length}</span>
+          <span className="resumen-rotulo">Pendientes en taller</span>
+        </a>
+        <Link className="resumen-casilla" href="/historial?estado=entregadas">
+          <span className="resumen-numero">{entregadasMes}</span>
+          <span className="resumen-rotulo">Entregados en {nombreMes}</span>
+        </Link>
+        <Link className="resumen-casilla resumen-casilla-accion" href="/ingreso">
+          <span className="resumen-numero">+</span>
+          <span className="resumen-rotulo">Recibir un equipo</span>
+        </Link>
       </section>
 
-      {consulta ? (
-        <section className="seccion">
-          <h2 className="subtitulo">Resultados para «{consulta}»</h2>
-          <ListaFichas filas={resultados} vacio="No se encontraron fichas para esa búsqueda." />
-        </section>
-      ) : null}
+      <form method="get" action="/historial" className="barra-busqueda" role="search">
+        <div className="barra-busqueda-campo">
+          <Campo
+            etiqueta="Buscar una ficha"
+            nombre="q"
+            placeholder="Número de ficha, IMEI, número de serie, modelo o quién lo trajo"
+            editable
+          />
+        </div>
+        <button className="boton-secundario" type="submit">
+          Buscar
+        </button>
+      </form>
 
-      <section className="seccion">
-        <h2 className="subtitulo">Equipos en taller ({enTaller.length})</h2>
-        <ListaFichas filas={enTaller} vacio="No hay equipos en taller en este momento." />
+      <section className="seccion" id="pendientes">
+        <h2 className="subtitulo">Pendientes en taller ({enTaller.length})</h2>
+        <p className="nota nota-seccion">Equipos recibidos que todavía no se entregan. Abre la ficha para repararlo y cerrarlo.</p>
+        <ListaFichas
+          filas={enTaller}
+          modo="pendientes"
+          vacio="No hay equipos pendientes. Cuando recibas uno, regístralo con Nuevo ingreso."
+        />
       </section>
 
       <section className="seccion">
-        <h2 className="subtitulo">Últimas fichas entregadas</h2>
-        <ListaFichas filas={entregadas} vacio="Todavía no hay fichas entregadas registradas." />
+        <div className="subtitulo subtitulo-con-enlace">
+          <h2 className="subtitulo-texto">Entregados recientemente</h2>
+          <Link className="enlace" href="/historial">
+            Ver todo el historial
+          </Link>
+        </div>
+        <ListaFichas filas={entregadas} modo="historial" vacio="Todavía no hay fichas entregadas." />
       </section>
     </main>
   )

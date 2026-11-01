@@ -1,5 +1,6 @@
 import { Archivo, Archivo_Narrow } from 'next/font/google'
 import type { ReactNode } from 'react'
+import { Navegacion } from '@/componentes/navegacion'
 import '@/estilos/tokens.css'
 
 // Una sola familia en dos anchos (diseño §10): Archivo para valores y texto corrido,
@@ -17,7 +18,10 @@ export const metadata = { title: 'AFIX' }
 export default function Layout({ children }: { children: ReactNode }) {
   return (
     <html lang="es" className={`${archivo.variable} ${archivoEstrecha.variable}`}>
-      <body>{children}</body>
+      <body>
+        <Navegacion />
+        {children}
+      </body>
     </html>
   )
 }

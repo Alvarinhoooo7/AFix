@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, isNull, ne, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, gte, inArray, isNull, ne, sql } from 'drizzle-orm'
 import { leerAjustes, type AjustesTaller } from '@/datos/ajustes'
 import { catalogoActivo, catalogoPorVersion } from '@/datos/catalogo'
 import { obtenerEquipo, type Ficha } from '@/datos/equipos'
@@ -240,6 +240,37 @@ export async function ultimasEntregadas(limite: number): Promise<FilaInicio[]> {
     .orderBy(desc(ficha.entregadoEn), desc(ficha.numero))
     .limit(limite)
   return filas.map(mapearFilaInicio)
+}
+
+/** El historial completo, de la ficha más nueva a la más vieja; con `estados`, solo los de esos estados. */
+export async function listarFichas(estados: readonly EstadoFicha[] | null, limite: number): Promise<FilaInicio[]> {
+  if (limite <= 0 || estados?.length === 0) return []
+  const filas = await obtenerDb()
+    .select({
+      numero: ficha.numero,
+      estado: ficha.estado,
+      modeloComercial: equipo.modeloComercial,
+      imei: equipo.imei,
+      quienLoTrajo: ficha.quienLoTrajo,
+      recibidoEn: ficha.recibidoEn,
+      entregadoEn: ficha.entregadoEn,
+      trabajosRealizados: ficha.trabajosRealizados,
+    })
+    .from(ficha)
+    .innerJoin(equipo, eq(ficha.equipoId, equipo.id))
+    .where(estados ? inArray(ficha.estado, [...estados]) : undefined)
+    .orderBy(desc(ficha.numero))
+    .limit(limite)
+  return filas.map(mapearFilaInicio)
+}
+
+/** Cuántas fichas se cerraron (con o sin reparación) desde la fecha dada. */
+export async function contarEntregadasDesde(desde: Date): Promise<number> {
+  const [fila] = await obtenerDb()
+    .select({ total: sql<number>`count(*)::int` })
+    .from(ficha)
+    .where(and(ne(ficha.estado, 'en_taller'), gte(ficha.entregadoEn, desde)))
+  return fila?.total ?? 0
 }
 
 function sinAcentosMinusculas(texto: string): string {

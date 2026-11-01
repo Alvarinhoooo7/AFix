@@ -70,6 +70,16 @@ export default async function Ajustes({
           </button>
         </div>
       </form>
+
+      <section className="seccion">
+        <h2 className="subtitulo">Respaldo</h2>
+        <p className="nota nota-seccion">
+          Descarga un archivo con todas las fichas, equipos, notas y datos del taller. Guárdalo fuera de este PC.
+        </p>
+        <a className="boton-secundario" href="/api/respaldo">
+          Descargar respaldo
+        </a>
+      </section>
     </main>
   )
 }

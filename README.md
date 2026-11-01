@@ -47,7 +47,7 @@ Si cambias o formateas el PC, sigue estos pasos para recuperar todo el sistema y
 
 ## 3. Respaldo descargable
 
-Además del ping automático en GitHub Actions, desde la pantalla de inicio puedes usar **Descargar respaldo** (`/api/respaldo`), que descarga un archivo `respaldo-afix-AAAA-MM-DD.json` con:
+Además del ping automático en GitHub Actions, desde **Datos del taller** puedes usar **Descargar respaldo** (`/api/respaldo`), que descarga un archivo `respaldo-afix-AAAA-MM-DD.json` con:
 
 - Todos los equipos registrados (`equipos`)
 - Todas las fichas (`fichas`) y sus notas posteriores (`notasPosteriores`)
