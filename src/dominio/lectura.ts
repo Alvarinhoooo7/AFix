@@ -305,6 +305,32 @@ export function compararPiezas(ingreso: Pieza[], salida: Pieza[], trabajos: stri
   })
 }
 
+/** El nombre del archivo sin carpeta: iOS mueve los registros viejos a /Retired y el nombre no cambia. */
+export function nombreArchivoRegistro(ruta: string): string {
+  return ruta.slice(ruta.lastIndexOf('/') + 1)
+}
+
+type RegistroGuardado = { nombreOriginal: string; momento: 'ingreso' | 'salida' | 'vigilancia'; fechaEvento: Date | null }
+
+/**
+ * Separa lo que el equipo traía de lo que pasó en el taller. Un registro que ya estaba al
+ * ingreso (aunque iOS lo haya movido de carpeta) o con fecha anterior al ingreso nunca
+ * cuenta como "después".
+ */
+export function separarRegistros<T extends RegistroGuardado>(registros: T[], recibidoEn: Date): { alIngreso: T[]; despues: T[] } {
+  const alIngreso = registros.filter((r) => r.momento === 'ingreso')
+  const yaEstaban = new Set(alIngreso.map((r) => nombreArchivoRegistro(r.nombreOriginal)))
+  const vistos = new Set<string>()
+  const despues = registros.filter((r) => {
+    if (r.momento === 'ingreso') return false
+    const nombre = nombreArchivoRegistro(r.nombreOriginal)
+    if (yaEstaban.has(nombre) || vistos.has(nombre)) return false
+    vistos.add(nombre)
+    return r.fechaEvento === null || r.fechaEvento > recibidoEn
+  })
+  return { alIngreso, despues }
+}
+
 /** Fallas registradas después de una fecha: en la salida, "nuevas desde el ingreso". */
 export function fallasDesde(e: Estabilidad | null, desde: Date): EventoEstabilidad[] {
   if (!e) return []

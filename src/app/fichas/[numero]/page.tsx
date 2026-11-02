@@ -11,6 +11,7 @@ import { obtenerEquipo } from '@/datos/equipos'
 import { obtenerFicha, registrosDeFicha } from '@/datos/fichas'
 import { tonoEstado, type LineaCatalogo } from '@/dominio/checklist'
 import { ETIQUETA_ESTADO, estaAbierta, vencimientoGarantia } from '@/dominio/ficha'
+import { separarRegistros } from '@/dominio/lectura'
 import { enlaceWhatsapp, mensajeDocumento } from '@/dominio/whatsapp'
 import { agregarNotaAccion, cambiarEstadoAccion, guardarReparacionAccion, marcarEnviadoAccion, reemitirAccion } from './acciones'
 import { FormularioReparacion } from './formulario-reparacion'
@@ -54,6 +55,7 @@ export default async function PaginaFicha({
     leerAjustes(),
   ])
   const abierta = estaAbierta(f.estado)
+  const registrosSeparados = separarRegistros(registros, f.recibidoEn)
   const accesorios = f.accesorios.map((a) => (a.nombre === 'Otro' ? a.detalle : a.nombre)).filter(Boolean)
   const lineasAlerta = catalogo.lineas.filter((l) => tonoEstado(f.checklistIngreso[l.clave]?.estado) === 'alerta')
   const ultimoDe = (tipo: 'ingreso' | 'salida') => documentos.filter((d) => d.tipo === tipo).at(-1)
@@ -202,7 +204,7 @@ export default async function PaginaFicha({
           <section className="seccion">
             <h2 className="subtitulo">Registros del equipo</h2>
             <ListaRegistros
-              registros={registros.map((r) => ({
+              registros={[...registrosSeparados.alIngreso, ...registrosSeparados.despues].map((r) => ({
                 clave: String(r.id),
                 tipo: r.tipo,
                 fecha: r.fechaEvento?.toISOString() ?? null,

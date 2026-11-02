@@ -15,7 +15,7 @@ import {
   type EstadoFicha,
   type ResultadoVigilancia,
 } from '@/dominio/ficha'
-import type { EventoEstabilidad, Lectura } from '@/dominio/lectura'
+import { nombreArchivoRegistro, type EventoEstabilidad, type Lectura } from '@/dominio/lectura'
 
 export type NotaPosterior = typeof notaPosterior.$inferSelect
 export type FichaConNotas = Ficha & { notasPosteriores: NotaPosterior[] }
@@ -326,8 +326,9 @@ async function guardarRegistrosNuevos(
     .select({ nombre: registroEquipo.nombreOriginal })
     .from(registroEquipo)
     .where(eq(registroEquipo.fichaNumero, numero))
-  const yaGuardados = new Set(guardados.map((r) => r.nombre))
-  const nuevos = eventos.filter((e) => !yaGuardados.has(e.nombre))
+  // Por nombre de archivo, no por ruta: iOS mueve los registros viejos a /Retired.
+  const yaGuardados = new Set(guardados.map((r) => nombreArchivoRegistro(r.nombre)))
+  const nuevos = eventos.filter((e) => !yaGuardados.has(nombreArchivoRegistro(e.nombre)))
   if (nuevos.length > 0) {
     await db.insert(registroEquipo).values(filasRegistro(numero, momento, nuevos)).onConflictDoNothing()
   }

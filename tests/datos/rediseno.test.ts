@@ -96,8 +96,11 @@ test('la salida guarda batería y solo los registros nuevos', async () => {
   expect(g.bateriaSalidaCiclos).toBe(0)
   const registros = await registrosDeFicha(f.numero)
   expect(registros.filter((r) => r.momento === 'salida').map((r) => r.tipo)).toEqual(['panic'])
-  // Repetir la lectura no duplica.
+  // Repetir la lectura no duplica, ni aunque iOS haya movido los archivos a /Retired.
   await guardarLecturaSalida(f.numero, salida)
+  const movida = lecturaDePrueba()
+  movida.estabilidad!.eventos = movida.estabilidad!.eventos.map((e) => ({ ...e, nombre: `/Retired/${e.nombre.split('/').pop()}` }))
+  await guardarLecturaSalida(f.numero, movida)
   expect(await registrosDeFicha(f.numero)).toHaveLength(registros.length)
 })
 

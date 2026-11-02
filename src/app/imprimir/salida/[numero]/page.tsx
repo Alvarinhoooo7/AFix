@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { CampoDoc, CamposEquipo, EncabezadoDocumento, fechaLarga, fechaYHora, TablaChecklist, TablaRegistros } from '@/componentes/documentos/partes'
 import { datosDocumento } from '@/datos/documento-ficha'
-import { resumenRegistros, TIPOS_FALLA } from '@/dominio/lectura'
+import { resumenRegistros, separarRegistros, TIPOS_FALLA } from '@/dominio/lectura'
 import '@/estilos/documento.css'
 
 export const metadata = { title: 'Informe de entrega — AFIX' }
@@ -19,8 +19,7 @@ export default async function InformeEntrega({ params }: { params: Promise<{ num
   if (!d) notFound()
   const { ficha: f, taller, lineas } = d
   const sinReparar = f.estado === 'entregado_sin_reparar'
-  const alIngreso = d.registros.filter((r) => r.momento === 'ingreso')
-  const despues = d.registros.filter((r) => r.momento !== 'ingreso')
+  const { alIngreso, despues } = separarRegistros(d.registros, f.recibidoEn)
   const fallasDespues = despues.filter((r) => TIPOS_FALLA.includes(r.tipo))
   const piezasCambiadas = d.piezas.filter((p) => p.estado === 'cambio')
   const iosAntes = f.lecturaIngreso?.sistema.ios ?? null

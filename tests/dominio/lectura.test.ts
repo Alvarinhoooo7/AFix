@@ -6,6 +6,7 @@ import {
   gravedad,
   motivoRegistro,
   resumenRegistros,
+  separarRegistros,
   textoAntecedentes,
   textoBuscarMiIphone,
   type Estabilidad,
@@ -92,6 +93,27 @@ test('el resumen de registros cuenta fallas y faltas de memoria por separado', (
   )
   expect(resumenRegistros(eventos.filter((e) => e.tipo === 'jetsam'))).toBe('0 fallas y 1 cierre por falta de memoria')
   expect(resumenRegistros([])).toBe('0 fallas')
+})
+
+test('un registro que iOS movió a /Retired no cuenta como nuevo en la salida', () => {
+  const recibido = new Date('2026-11-01T12:00:00-03:00')
+  const fila = (nombreOriginal: string, momento: 'ingreso' | 'salida' | 'vigilancia', fecha: string | null) => ({
+    nombreOriginal,
+    momento,
+    fechaEvento: fecha ? new Date(fecha) : null,
+  })
+  const { alIngreso, despues } = separarRegistros(
+    [
+      fila('/stacks-2026-10-30-065249.ips', 'ingreso', '2026-10-30T06:52:49-03:00'),
+      fila('/Retired/stacks-2026-10-30-065249.ips', 'salida', '2026-10-30T06:52:49-03:00'),
+      fila('/Retired/JetsamEvent-2026-10-29-111943.ips', 'salida', '2026-10-29T11:19:43-03:00'),
+      fila('/panic-full-2026-11-03-101010.ips', 'salida', '2026-11-03T10:10:10-03:00'),
+      fila('/Retired/panic-full-2026-11-03-101010.ips', 'vigilancia', '2026-11-03T10:10:10-03:00'),
+    ],
+    recibido,
+  )
+  expect(alIngreso).toHaveLength(1)
+  expect(despues.map((r) => r.nombreOriginal)).toEqual(['/panic-full-2026-11-03-101010.ips'])
 })
 
 test('fallas desde una fecha ignoran la falta de memoria', () => {
