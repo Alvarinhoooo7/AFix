@@ -1,6 +1,27 @@
-# AFIX — Plataforma de servicio técnico
+<p align="center">
+  <img src="public/marca/afix-negro.svg" alt="Logo de AFIX" width="120" height="120">
+</p>
 
-Sistema del taller **AFIX** para iPhone e iPad: lectura por USB (más completa que 3uTools), fichas numeradas, inspección con checklist versionado, antecedentes de estabilidad leídos del propio iPhone, comprobante de ingreso e informe de entrega en PDF archivados en Supabase Storage, y respaldo exportable.
+<h1 align="center">AFIX</h1>
+
+<p align="center">
+  Software de registro y trazabilidad de reparaciones para el servicio técnico de iPhone e iPad.
+  <br>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/licencia-MIT-black" alt="Licencia MIT"></a>
+</p>
+
+---
+
+**AFIX** registra cada equipo desde que entra al taller hasta que se entrega:
+
+- **Lectura por USB, más completa que 3uTools.** Identidad, batería, Buscar mi iPhone, series de piezas y los registros del propio iPhone (pánicos, reinicios forzados, bloqueos), con fecha y hora.
+- **Fichas numeradas** con inspección de estado físico y funcionamiento, y un checklist versionado.
+- **Antecedentes de fallas.** Dejan por escrito que el equipo ya fallaba antes de entrar.
+- **Comprobante de ingreso e informe de entrega en PDF**, archivados en Supabase Storage con su huella `sha256` y listos para enviar por WhatsApp.
+- **Vigilancia en vivo** durante las pruebas de salida y comparación de piezas entre ingreso y entrega.
+- **Respaldo exportable** en `.zip`, con todo el historial y los PDF.
+
+Hecho con Next.js, Postgres en Supabase y un agente USB en Python sobre [pymobiledevice3](https://github.com/doronz88/pymobiledevice3).
 
 ---
 
@@ -84,3 +105,9 @@ Consulta [`docs/desarrollo.md`](docs/desarrollo.md) para el entorno local con Do
 - `npm run test:agente`: pruebas del agente USB (pytest) con fixtures, sin equipo conectado.
 - **Sonda:** `cd agente; C:\afix-usb\venv\Scripts\python.exe -m afix_usb.sonda salida.json --anonimo` vuelca todo lo que entrega el iPhone conectado, con IMEI, series y cuenta reemplazados. Sirve para sumar fixtures en `agente/pruebas/fixtures/`.
 - **La base local nunca debe contener datos reales de clientes**: el stack de Supabase publica sus puertos en `0.0.0.0` con la contraseña por omisión.
+
+---
+
+## Licencia
+
+[MIT](LICENSE) © 2026 AFIX. El repositorio es privado: la licencia rige para quien reciba una copia del código.

@@ -2,6 +2,7 @@
 name = "afix-usb"
 version = "1.0.0"
 description = "Agente USB de AFix: lee iPhone e iPad por usbmux para la app del taller"
+license = "MIT"
 requires-python = ">=3.12"
 dependencies = [
   "pymobiledevice3==11.49.1",
