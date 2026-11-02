@@ -153,9 +153,10 @@ export function motivoRegistro(r: RegistroBreve): string {
   if (r.tipo === 'reinicio_forzado') return 'El equipo quedó pegado y se forzó el reinicio con los botones'
   if (r.tipo === 'jetsam') {
     const app = r.resumen.match(/proceso más grande:\s*(.+)$/i)?.[1]?.trim()
-    return app && app !== 'no informado'
-      ? `iOS cerró apps por falta de memoria; la que más memoria usaba era ${app}`
-      : 'iOS cerró apps por falta de memoria'
+    if (!app || app === 'no informado') return 'iOS cerró apps por falta de memoria'
+    // kernel_task es el propio iOS, no una app: decirlo así evita culpar a una app que no existe.
+    if (app === 'kernel_task') return 'iOS cerró apps por falta de memoria; lo que más memoria usaba era el propio sistema (kernel_task)'
+    return `iOS cerró apps por falta de memoria; la que más memoria usaba era ${app}`
   }
   if (r.tipo === 'stacks') {
     const parte = PARTES_DEL_SISTEMA.find(([patron]) => patron.test(r.resumen))?.[1]

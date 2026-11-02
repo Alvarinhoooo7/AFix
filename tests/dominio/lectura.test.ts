@@ -72,6 +72,7 @@ test('el motivo de cada registro se dice en palabras del taller', () => {
   expect(motivoRegistro({ tipo: 'jetsam', resumen: 'Falta de memoria; proceso más grande: no informado' })).toBe(
     'iOS cerró apps por falta de memoria',
   )
+  expect(motivoRegistro({ tipo: 'jetsam', resumen: 'Falta de memoria; proceso más grande: kernel_task' })).toMatch(/propio sistema/)
   expect(motivoRegistro({ tipo: 'stacks', resumen: 'BTAudioPlugin start condition timed out' })).toBe(
     'El sistema dejó de responder (audio Bluetooth): BTAudioPlugin start condition timed out',
   )
