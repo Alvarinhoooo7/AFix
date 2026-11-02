@@ -6,11 +6,15 @@ Sistema del taller **AFIX** para iPhone e iPad: lectura por USB (más completa q
 
 ## 1. Uso diario
 
+Doble clic en el acceso directo **AFix** del escritorio, o en una terminal:
+
 ```bash
 npm run taller
 ```
 
-Levanta el **agente USB** (`127.0.0.1:8765`) y la app (`127.0.0.1:3000`), y abre el navegador. La primera vez, y después de cada actualización del código, compila la app antes de arrancar. Si el agente no está, la app funciona igual en modo manual.
+Levanta el **agente USB** (`127.0.0.1:8765`) y la app (`127.0.0.1:3000`), y abre el navegador. La primera vez, y después de cada actualización del código, compila la app antes de arrancar. Si el agente no está, la app funciona igual en modo manual. Si AFix ya está abierto, solo abre el navegador. Para cerrarlo, cierra la ventana «AFix» de la barra de tareas.
+
+Para volver a crear el acceso directo (por ejemplo, en un PC nuevo), apunta uno a `scripts\AFix.cmd` con el ícono `public\marcafix.ico`.
 
 El flujo:
 

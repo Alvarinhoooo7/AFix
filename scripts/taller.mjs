@@ -19,6 +19,25 @@ function versionActual() {
   }
 }
 
+function abrirNavegador() {
+  spawn('cmd', ['/c', 'start', '', URL_APP], { detached: true, stdio: 'ignore' }).unref()
+}
+
+async function responde(url) {
+  try {
+    return (await fetch(url, { signal: AbortSignal.timeout(1500) })).ok
+  } catch {
+    return false
+  }
+}
+
+// Doble clic con AFix ya abierto: no se levanta otra copia, solo se abre el navegador.
+if (await responde(URL_APP)) {
+  console.log(`AFix ya está corriendo en ${URL_APP}: se abre el navegador.`)
+  abrirNavegador()
+  process.exit(0)
+}
+
 const marca = join(raiz, '.next', 'afix-version')
 const version = versionActual()
 if (!existsSync(join(raiz, '.next', 'BUILD_ID')) || !existsSync(marca) || readFileSync(marca, 'utf8') !== version) {
@@ -29,7 +48,9 @@ if (!existsSync(join(raiz, '.next', 'BUILD_ID')) || !existsSync(marca) || readFi
 
 const procesos = []
 
-if (existsSync(PYTHON)) {
+if (await responde('http://127.0.0.1:8765/salud')) {
+  console.log('El agente USB ya estaba corriendo.')
+} else if (existsSync(PYTHON)) {
   procesos.push(
     spawn(PYTHON, ['-m', 'afix_usb.servidor'], { cwd: join(raiz, 'agente'), stdio: 'inherit' }),
   )
@@ -40,9 +61,8 @@ if (existsSync(PYTHON)) {
 
 procesos.push(spawn('npx', ['next', 'start', '-H', '127.0.0.1', '-p', PUERTO], { cwd: raiz, stdio: 'inherit', shell: true }))
 
-setTimeout(() => {
-  spawn('cmd', ['/c', 'start', '', URL_APP], { detached: true, stdio: 'ignore' }).unref()
-}, 2500)
+setTimeout(abrirNavegador, 2500)
+console.log('AFix abierto. Para cerrarlo, cierra esta ventana.')
 
 function cerrar() {
   for (const p of procesos) p.kill()
