@@ -14,7 +14,7 @@ npm run taller
 
 Levanta el **agente USB** (`127.0.0.1:8765`) y la app (`127.0.0.1:3000`), y abre el navegador. La primera vez, y después de cada actualización del código, compila la app antes de arrancar. Si el agente no está, la app funciona igual en modo manual. Si AFix ya está abierto, solo abre el navegador. Para cerrarlo, cierra la ventana «AFix» de la barra de tareas.
 
-Para volver a crear el acceso directo (por ejemplo, en un PC nuevo), apunta uno a `scripts\AFix.cmd` con el ícono `public\marca\fix.ico`.
+Para volver a crear el acceso directo (por ejemplo, en un PC nuevo), apunta uno a `scripts\AFix.cmd` con el ícono `public\marca\afix.ico`.
 
 El flujo:
 
