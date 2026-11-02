@@ -116,6 +116,66 @@ export function nombreTipo(tipo: TipoRegistro, cantidad = 1): string {
   return NOMBRE_TIPO[tipo][cantidad === 1 ? 0 : 1]
 }
 
+export type Gravedad = 'Alta' | 'Media' | 'Baja'
+
+/** Alta: el equipo se colgó. Media: algo del sistema dejó de responder. Baja: apps, no hardware. */
+const GRAVEDAD: Record<TipoRegistro, Gravedad> = {
+  panic: 'Alta',
+  reinicio_forzado: 'Alta',
+  stacks: 'Media',
+  reset_counter: 'Media',
+  jetsam: 'Baja',
+}
+
+export function gravedad(tipo: TipoRegistro): Gravedad {
+  return GRAVEDAD[tipo]
+}
+
+// Qué parte del sistema nombra el motivo de un bloqueo, en palabras del taller.
+const PARTES_DEL_SISTEMA: [RegExp, string][] = [
+  [/bluetooth|btaudio/i, 'audio Bluetooth'],
+  [/backboardd|springboard/i, 'pantalla de inicio'],
+  [/camera|cámara/i, 'cámara'],
+  [/wifi|wi-fi/i, 'Wi-Fi'],
+  [/audio|mediaserverd/i, 'audio'],
+  [/baseband|commcenter/i, 'red celular'],
+  [/touch|hid/i, 'táctil'],
+]
+
+type RegistroBreve = { tipo: TipoRegistro; resumen: string }
+
+/**
+ * El motivo de un registro dicho para el cliente: "iOS cerró apps por falta de memoria; la
+ * que más memoria usaba era TikTok". Sale de lo que ya está guardado, así sirve también
+ * para registros viejos.
+ */
+export function motivoRegistro(r: RegistroBreve): string {
+  if (r.tipo === 'reinicio_forzado') return 'El equipo quedó pegado y se forzó el reinicio con los botones'
+  if (r.tipo === 'jetsam') {
+    const app = r.resumen.match(/proceso más grande:\s*(.+)$/i)?.[1]?.trim()
+    return app && app !== 'no informado'
+      ? `iOS cerró apps por falta de memoria; la que más memoria usaba era ${app}`
+      : 'iOS cerró apps por falta de memoria'
+  }
+  if (r.tipo === 'stacks') {
+    const parte = PARTES_DEL_SISTEMA.find(([patron]) => patron.test(r.resumen))?.[1]
+    return `El sistema dejó de responder${parte ? ` (${parte})` : ''}: ${r.resumen}`
+  }
+  return r.resumen
+}
+
+/** "5 fallas (3 reinicios forzados, 2 bloqueos de sistema) y 7 cierres por falta de memoria". */
+export function resumenRegistros(registros: RegistroBreve[]): string {
+  const cuenta = (tipo: TipoRegistro) => registros.filter((r) => r.tipo === tipo).length
+  const fallas = TIPOS_FALLA.filter((t) => cuenta(t) > 0).map((t) => `${cuenta(t)} ${nombreTipo(t, cuenta(t))}`)
+  const totalFallas = TIPOS_FALLA.reduce((suma, t) => suma + cuenta(t), 0)
+  const memoria = cuenta('jetsam')
+  const partes: string[] = []
+  partes.push(totalFallas === 0 ? '0 fallas' : `${totalFallas} ${totalFallas === 1 ? 'falla' : 'fallas'} (${fallas.join(', ')})`)
+  if (memoria > 0) partes.push(`${memoria} ${nombreTipo('jetsam', memoria)}`)
+  return partes.join(' y ')
+}
+
 // Todas las fechas se muestran en la hora de Chile, que es donde está el taller.
 const ZONA = 'America/Santiago'
 

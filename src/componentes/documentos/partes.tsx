@@ -5,7 +5,7 @@ import type { AjustesTaller } from '@/datos/ajustes'
 import type { DatoEquipo } from '@/datos/documento-ficha'
 import type { RegistroEquipo } from '@/datos/fichas'
 import { tonoEstado, type Checklist, type LineaCatalogo } from '@/dominio/checklist'
-import { fechaHora, nombreTipo } from '@/dominio/lectura'
+import { fechaHora, gravedad, motivoRegistro, nombreTipo } from '@/dominio/lectura'
 
 const ZONA = 'America/Santiago'
 
@@ -115,27 +115,39 @@ export function TablaChecklist({
   )
 }
 
+/**
+ * Cada registro del equipo con su fecha, gravedad y motivo en palabras del taller. Los de
+ * gravedad alta van en rojo. La causa probable solo aparece si agrega algo al motivo.
+ */
 export function TablaRegistros({ registros }: { registros: RegistroEquipo[] }) {
+  const ordenados = [...registros].sort((a, b) => (b.fechaEvento?.getTime() ?? 0) - (a.fechaEvento?.getTime() ?? 0))
   return (
     <table className="documento-tabla">
       <thead>
         <tr>
           <th>Fecha y hora</th>
           <th>Registro</th>
-          <th>Detalle</th>
+          <th>Gravedad</th>
+          <th>Motivo</th>
         </tr>
       </thead>
       <tbody>
-        {registros.map((r) => (
-          <tr key={r.id}>
-            <td style={{ whiteSpace: 'nowrap' }}>{r.fechaEvento ? fechaHora(r.fechaEvento.toISOString()) : 'Sin fecha'}</td>
-            <td>{nombreTipo(r.tipo)}</td>
-            <td>
-              {r.resumen}
-              {r.causaProbable ? <span className="documento-nota-linea">Causa probable: {r.causaProbable}</span> : null}
-            </td>
-          </tr>
-        ))}
+        {ordenados.map((r) => {
+          const nivel = gravedad(r.tipo)
+          const motivo = motivoRegistro(r)
+          const causa = r.causaProbable && !motivo.toLowerCase().includes(r.causaProbable.toLowerCase().slice(0, 20)) ? r.causaProbable : null
+          return (
+            <tr key={r.id}>
+              <td style={{ whiteSpace: 'nowrap' }}>{r.fechaEvento ? fechaHora(r.fechaEvento.toISOString()) : 'Sin fecha'}</td>
+              <td>{nombreTipo(r.tipo)}</td>
+              <td className={nivel === 'Alta' ? 'estado-alerta' : nivel === 'Baja' ? 'estado-sin-dato' : 'estado-bien'}>{nivel}</td>
+              <td>
+                {motivo}
+                {causa ? <span className="documento-nota-linea">Causa probable: {causa}</span> : null}
+              </td>
+            </tr>
+          )
+        })}
       </tbody>
     </table>
   )

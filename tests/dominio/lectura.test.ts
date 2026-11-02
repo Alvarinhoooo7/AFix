@@ -3,6 +3,9 @@ import {
   avisosDeContexto,
   compararPiezas,
   fallasDesde,
+  gravedad,
+  motivoRegistro,
+  resumenRegistros,
   textoAntecedentes,
   textoBuscarMiIphone,
   type Estabilidad,
@@ -59,6 +62,36 @@ test('comparar piezas distingue el cambio esperado del sospechoso', () => {
 test('una pieza sin serie en un lado no se marca como cambio', () => {
   const [d] = compararPiezas([{ clave: 'bateria', nombre: 'Batería', serie: null }], [{ clave: 'bateria', nombre: 'Batería', serie: 'X' }], [])
   expect(d.estado).toBe('sin_dato')
+})
+
+test('el motivo de cada registro se dice en palabras del taller', () => {
+  expect(motivoRegistro({ tipo: 'jetsam', resumen: 'Falta de memoria; proceso más grande: TikTok' })).toBe(
+    'iOS cerró apps por falta de memoria; la que más memoria usaba era TikTok',
+  )
+  expect(motivoRegistro({ tipo: 'jetsam', resumen: 'Falta de memoria; proceso más grande: no informado' })).toBe(
+    'iOS cerró apps por falta de memoria',
+  )
+  expect(motivoRegistro({ tipo: 'stacks', resumen: 'BTAudioPlugin start condition timed out' })).toBe(
+    'El sistema dejó de responder (audio Bluetooth): BTAudioPlugin start condition timed out',
+  )
+  expect(motivoRegistro({ tipo: 'reinicio_forzado', resumen: 'Reinicio forzado con los botones' })).toMatch(/quedó pegado/)
+  expect(motivoRegistro({ tipo: 'panic', resumen: 'panic(cpu 0): Missing sensor(s): mic1' })).toBe('panic(cpu 0): Missing sensor(s): mic1')
+})
+
+test('la gravedad separa lo que es del equipo de lo que es de las apps', () => {
+  expect(gravedad('panic')).toBe('Alta')
+  expect(gravedad('reinicio_forzado')).toBe('Alta')
+  expect(gravedad('stacks')).toBe('Media')
+  expect(gravedad('jetsam')).toBe('Baja')
+})
+
+test('el resumen de registros cuenta fallas y faltas de memoria por separado', () => {
+  const eventos = lecturaDePrueba().estabilidad!.eventos
+  expect(resumenRegistros(eventos)).toBe(
+    '4 fallas (3 reinicios forzados, 1 bloqueo de sistema) y 1 cierre por falta de memoria',
+  )
+  expect(resumenRegistros(eventos.filter((e) => e.tipo === 'jetsam'))).toBe('0 fallas y 1 cierre por falta de memoria')
+  expect(resumenRegistros([])).toBe('0 fallas')
 })
 
 test('fallas desde una fecha ignoran la falta de memoria', () => {

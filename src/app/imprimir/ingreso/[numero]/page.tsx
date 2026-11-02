@@ -10,7 +10,7 @@ import {
 } from '@/componentes/documentos/partes'
 import { datosDocumento } from '@/datos/documento-ficha'
 import { tonoEstado } from '@/dominio/checklist'
-import { avisosDeContexto, NO_INFORMADO, textoAntecedentes, textoBuscarMiIphone, TIPOS_FALLA } from '@/dominio/lectura'
+import { avisosDeContexto, NO_INFORMADO, textoAntecedentes, textoBuscarMiIphone } from '@/dominio/lectura'
 import '@/estilos/documento.css'
 
 export const metadata = { title: 'Comprobante de ingreso — AFIX' }
@@ -24,7 +24,8 @@ export default async function ComprobanteIngreso({ params }: { params: Promise<{
   const { ficha: f, taller, lineas } = d
   const l = f.lecturaIngreso
   const sinProbar = lineas.filter((x) => x.bloque === 'funcionamiento' && tonoEstado(f.checklistIngreso[x.clave]?.estado) === 'sin_dato')
-  const registrosIngreso = d.registros.filter((r) => r.momento === 'ingreso' && TIPOS_FALLA.includes(r.tipo))
+  // Todos los registros, también las faltas de memoria: entre más respaldo, mejor.
+  const registrosIngreso = d.registros.filter((r) => r.momento === 'ingreso')
   const accesorios = f.accesorios.map((a) => (a.nombre === 'Otro' ? a.detalle : a.nombre)).filter(Boolean)
 
   return (

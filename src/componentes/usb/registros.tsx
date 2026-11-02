@@ -1,4 +1,4 @@
-import { fechaHora, nombreTipo, TIPOS_FALLA, type TipoRegistro } from '@/dominio/lectura'
+import { fechaHora, gravedad, motivoRegistro, nombreTipo, TIPOS_FALLA, type TipoRegistro } from '@/dominio/lectura'
 
 export type RegistroVisible = {
   clave: string
@@ -28,7 +28,8 @@ export function ListaRegistros({ registros, vacio }: { registros: RegistroVisibl
             <summary>
               <span className="registro-fecha">{r.fecha ? fechaHora(r.fecha) : 'Sin fecha'}</span>
               <span className={falla ? 'texto-alerta' : 'texto-secundario'}>{nombreTipo(r.tipo)}</span>
-              <span>{r.resumen}</span>
+              <span>{motivoRegistro(r)}</span>
+              <span className={gravedad(r.tipo) === 'Alta' ? 'etiqueta texto-alerta' : 'etiqueta'}>Gravedad {gravedad(r.tipo).toLowerCase()}</span>
               {r.momento ? <span className="etiqueta">{ETIQUETA_MOMENTO[r.momento]}</span> : null}
               {r.nuevo ? <span className="etiqueta texto-alerta">Nuevo</span> : null}
             </summary>

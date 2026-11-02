@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { CampoDoc, CamposEquipo, EncabezadoDocumento, fechaLarga, fechaYHora, TablaChecklist, TablaRegistros } from '@/componentes/documentos/partes'
 import { datosDocumento } from '@/datos/documento-ficha'
-import { TIPOS_FALLA } from '@/dominio/lectura'
+import { resumenRegistros, TIPOS_FALLA } from '@/dominio/lectura'
 import '@/estilos/documento.css'
 
 export const metadata = { title: 'Informe de entrega — AFIX' }
@@ -19,9 +19,9 @@ export default async function InformeEntrega({ params }: { params: Promise<{ num
   if (!d) notFound()
   const { ficha: f, taller, lineas } = d
   const sinReparar = f.estado === 'entregado_sin_reparar'
-  const fallas = d.registros.filter((r) => TIPOS_FALLA.includes(r.tipo))
-  const alIngreso = fallas.filter((r) => r.momento === 'ingreso')
-  const despues = fallas.filter((r) => r.momento !== 'ingreso')
+  const alIngreso = d.registros.filter((r) => r.momento === 'ingreso')
+  const despues = d.registros.filter((r) => r.momento !== 'ingreso')
+  const fallasDespues = despues.filter((r) => TIPOS_FALLA.includes(r.tipo))
   const piezasCambiadas = d.piezas.filter((p) => p.estado === 'cambio')
   const iosAntes = f.lecturaIngreso?.sistema.ios ?? null
   const iosDespues = f.lecturaSalida?.sistema.ios ?? null
@@ -115,17 +115,27 @@ export default async function InformeEntrega({ params }: { params: Promise<{ num
         <h2>Estabilidad antes y después</h2>
         <p style={{ margin: '0 0 0.4rem' }}>
           <strong>Al ingreso:</strong>{' '}
-          {f.lecturaIngreso?.estabilidad ? `${alIngreso.length} fallas registradas en el equipo.` : 'sin lectura de registros.'}{' '}
-          <strong>Después del ingreso:</strong> {despues.length === 0 ? '0 fallas nuevas.' : `${despues.length} fallas nuevas (detalle abajo).`}
-          {vigilancia ? (
-            <>
-              {' '}
-              <strong>Pruebas de salida:</strong> {vigilancia.fallas} fallas durante {Math.round(vigilancia.minutos)} min de vigilancia en vivo
-              {vigilancia.desconexiones > 0 ? `, ${vigilancia.desconexiones} desconexiones` : ''}.
-            </>
-          ) : null}
+          {!f.lecturaIngreso?.estabilidad
+            ? 'sin lectura de registros.'
+            : alIngreso.length === 0
+              ? 'el equipo no tenía registros de fallas.'
+              : `${resumenRegistros(alIngreso)} registrados en el equipo antes de entrar al taller.`}
+        </p>
+        {alIngreso.length > 0 ? <TablaRegistros registros={alIngreso} /> : null}
+        <p style={{ margin: '0.6rem 0 0.4rem' }}>
+          <strong>Después del ingreso:</strong>{' '}
+          {despues.length === 0
+            ? '0 fallas nuevas.'
+            : `${resumenRegistros(despues)}${fallasDespues.length === 0 ? ': ninguna falla del equipo' : ''}.`}
         </p>
         {despues.length > 0 ? <TablaRegistros registros={despues} /> : null}
+        {vigilancia ? (
+          <p style={{ margin: '0.6rem 0 0' }}>
+            <strong>Pruebas de salida:</strong> {vigilancia.fallas} {vigilancia.fallas === 1 ? 'falla' : 'fallas'} durante{' '}
+            {Math.max(1, Math.round(vigilancia.minutos))} min de vigilancia en vivo
+            {vigilancia.desconexiones > 0 ? `, ${vigilancia.desconexiones} desconexiones` : ''}.
+          </p>
+        ) : null}
       </section>
 
       <section className="documento-seccion-larga">
