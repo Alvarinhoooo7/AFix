@@ -119,6 +119,10 @@ export function TablaChecklist({
  * Cada registro del equipo con su fecha, gravedad y motivo en palabras del taller. Los de
  * gravedad alta van en rojo. La causa probable solo aparece si agrega algo al motivo.
  */
+function capitalizar(texto: string): string {
+  return texto.charAt(0).toUpperCase() + texto.slice(1)
+}
+
 export function TablaRegistros({ registros }: { registros: RegistroEquipo[] }) {
   const ordenados = [...registros].sort((a, b) => (b.fechaEvento?.getTime() ?? 0) - (a.fechaEvento?.getTime() ?? 0))
   return (
@@ -135,11 +139,12 @@ export function TablaRegistros({ registros }: { registros: RegistroEquipo[] }) {
         {ordenados.map((r) => {
           const nivel = gravedad(r.tipo)
           const motivo = motivoRegistro(r)
-          const causa = r.causaProbable && !motivo.toLowerCase().includes(r.causaProbable.toLowerCase().slice(0, 20)) ? r.causaProbable : null
+          // En bloqueos, reinicios y memoria el motivo ya lo explica; la causa probable suma en los pánicos.
+          const causa = r.tipo === 'panic' || r.tipo === 'reset_counter' ? r.causaProbable : null
           return (
             <tr key={r.id}>
               <td style={{ whiteSpace: 'nowrap' }}>{r.fechaEvento ? fechaHora(r.fechaEvento.toISOString()) : 'Sin fecha'}</td>
-              <td>{nombreTipo(r.tipo)}</td>
+              <td>{capitalizar(nombreTipo(r.tipo))}</td>
               <td className={nivel === 'Alta' ? 'estado-alerta' : nivel === 'Baja' ? 'estado-sin-dato' : 'estado-bien'}>{nivel}</td>
               <td>
                 {motivo}
